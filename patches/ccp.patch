@@ -1,0 +1,65 @@
+diff --git a/nodes/edge_line.py b/nodes/edge_line.py
+index 44d4e4e..576c0ac 100644
+--- a/nodes/edge_line.py
++++ b/nodes/edge_line.py
+@@ -1,12 +1,12 @@
+ from .util import common_annotator_call, img_np_to_tensor, img_tensor_to_np, skip_v1
+-if not skip_v1:
++if True or not skip_v1:
+     from ..v1 import canny, hed_v1, mlsd
+ from ..v11 import hed_v11, pidinet_v11, lineart, lineart_anime
+ from .. import binary, manga_line_extraction
+ import numpy as np
+ import cv2
+ 
+-if not skip_v1:
++if True or not skip_v1:
+     class Canny_Edge_Preprocessor:
+         @classmethod
+         def INPUT_TYPES(s):
+diff --git a/nodes/normal_depth_map.py b/nodes/normal_depth_map.py
+index 7dce1d5..afc2cdc 100644
+--- a/nodes/normal_depth_map.py
++++ b/nodes/normal_depth_map.py
+@@ -1,10 +1,9 @@
+ from .util import common_annotator_call, img_np_to_tensor, skip_v1
+-if not skip_v1:
+-    from ..v1 import midas, leres
++from ..v1 import midas, leres
+ from ..v11 import zoe, normalbae
+ import numpy as np
+ 
+-if not skip_v1:
++if True or not skip_v1:
+     class MIDAS_Depth_Map_Preprocessor:
+         @classmethod
+         def INPUT_TYPES(s):
+@@ -43,7 +42,7 @@ class MIDAS_Normal_Map_Preprocessor:
+         return (img_np_to_tensor(normal_map_np),)
+ 
+ 
+-if not skip_v1:
++if True or not skip_v1:
+     class LERES_Depth_Map_Preprocessor:
+         @classmethod
+         def INPUT_TYPES(s):
+diff --git a/v1/midas/__init__.py b/v1/midas/__init__.py
+index 7155b20..eeb2f89 100644
+--- a/v1/midas/__init__.py
++++ b/v1/midas/__init__.py
+@@ -8,13 +8,13 @@ import comfy.model_management as model_management
+ 
+ class MidasDetector:
+     def __init__(self):
+-        self.model = MiDaSInference(model_type="dpt_hybrid").to(comfy.model_management.get_torch_device())
++        self.model = MiDaSInference(model_type="dpt_hybrid").to(model_management.get_torch_device())
+ 
+     def __call__(self, input_image, a=np.pi * 2.0, bg_th=0.1):
+         assert input_image.ndim == 3
+         image_depth = input_image
+         with torch.no_grad():
+-            image_depth = torch.from_numpy(image_depth).float().to(comfy.model_management.get_torch_device())
++            image_depth = torch.from_numpy(image_depth).float().to(model_management.get_torch_device())
+             image_depth = image_depth / 127.5 - 1.0
+             image_depth = rearrange(image_depth, 'h w c -> 1 c h w')
+             depth = self.model(image_depth)[0]
