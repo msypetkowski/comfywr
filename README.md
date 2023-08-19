@@ -15,8 +15,10 @@ very complex inference scripts featuring multiple checkpoints, multiple controln
 Setup environment
 -----------------
 
-Apply patches, build image, run jupyterlab:
+Fetch submodules, apply patches, build image, run jupyterlab:
 ```bash
+git submodule init
+git submodule update
 ./tools/apply_patches.sh
 ./tools/build_docker.sh
 ./tools/run_docker_nb.sh
