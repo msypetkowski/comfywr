@@ -1,6 +1,8 @@
 ComfyUI wrappers and utils
 ==========================
 
+This is purely experimental, WIP, convenience repo, with just some wrappers and relatively simple scripts for diffusion models inference.
+
 ComfyUI is a very convinient UI for image generation, which attracts developers to make their own plugins.
 While the diffusers library may seem to be a clean base for inference experiments,
 using ComfyUI nodes as a python library backend seems a silly idea,
