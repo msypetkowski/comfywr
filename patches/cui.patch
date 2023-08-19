@@ -1,0 +1,13 @@
+diff --git a/comfy/cli_args.py b/comfy/cli_args.py
+index 374dd2f..d602690 100644
+--- a/comfy/cli_args.py
++++ b/comfy/cli_args.py
+@@ -91,7 +91,7 @@ parser.add_argument("--windows-standalone-build", action="store_true", help="Win
+ 
+ parser.add_argument("--disable-metadata", action="store_true", help="Disable saving prompt metadata in files.")
+ 
+-args = parser.parse_args()
++args = parser.parse_args([])
+ 
+ if args.windows_standalone_build:
+     args.auto_launch = True
