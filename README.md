@@ -22,7 +22,7 @@ git submodule update
 ./tools/apply_patches.sh
 ./tools/build_docker.sh
 
-# add your models path here so that the following script works
+# add your data (i.e. models, embeddings, etc) paths here so that the following script works
 # check the script for details
 export MY_DATA_ROOT=...
 ./tools/run_docker_nb.sh

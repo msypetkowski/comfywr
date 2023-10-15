@@ -53,16 +53,18 @@ def cn_preprocess(imgs, preprocess_alg):
 def model_merge_simple(chkp1, chkp2, ratio):
     return ModelMergeSimple().merge(chkp1, chkp2, 1 - ratio)[0]
 
+
 def clip_merge_simple(chkp1, chkp2, ratio):
     return CLIPMergeSimple().merge(chkp1, chkp2, 1 - ratio)[0]
+
 
 def load_cn(paths, path_key):
     if path_key not in paths:
         return None
     try:
-        return ControlNetLoader().load_controlnet(path)[0]
+        return ControlNetLoader().load_controlnet(paths[path_key])[0]
     except AttributeError:
-        print('WARNING: skipping non-existent checkpoint ' + str(path))
+        print('WARNING: skipping non-existent checkpoint ' + str(paths[path_key]))
         return None
 
 
@@ -73,6 +75,7 @@ def load_sd_checkpoint(path):
 
 def load_upscale_model(path):
     return UpscaleModelLoader().load_model(path)[0]
+
 
 def load_checkpoints(paths):
     init_custom_nodes()
@@ -131,7 +134,7 @@ def sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,
             assert len(c) == 2
             assert not c[1]
     if cn is not None:
-        positive = [[positive[0][0], {'control': cn}]]
+        positive = [[positive[0][0], {'control': cn, 'control_apply_to_uncond': True}]]
     latents, = common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,
                                dict(samples=latent_image['samples'], batch_index=batch_index),
                                denoise=denoise)
