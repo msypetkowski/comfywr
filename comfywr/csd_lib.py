@@ -2,7 +2,9 @@ import numpy as np
 import torch
 
 from comfy_extras.nodes_upscale_model import ImageUpscaleWithModel, UpscaleModelLoader
-from custom_nodes.comfy_controlnet_preprocessors.nodes.edge_line import Canny_Edge_Preprocessor, LineArt_Preprocessor, Scribble_Preprocessor
+from comfy_extras.nodes_model_merging import ModelMergeSimple, CLIPMergeSimple
+from custom_nodes.comfy_controlnet_preprocessors.nodes.edge_line import Canny_Edge_Preprocessor, LineArt_Preprocessor, \
+    Scribble_Preprocessor
 from custom_nodes.comfy_controlnet_preprocessors.nodes.normal_depth_map import MIDAS_Normal_Map_Preprocessor, \
     MIDAS_Depth_Map_Preprocessor, LERES_Depth_Map_Preprocessor
 from custom_nodes.comfy_controlnet_preprocessors.nodes.pose import OpenPose_Preprocessor
@@ -48,32 +50,47 @@ def cn_preprocess(imgs, preprocess_alg):
     return estimated
 
 
-def load_cn(path):
+def model_merge_simple(chkp1, chkp2, ratio):
+    return ModelMergeSimple().merge(chkp1, chkp2, 1 - ratio)[0]
+
+def clip_merge_simple(chkp1, chkp2, ratio):
+    return CLIPMergeSimple().merge(chkp1, chkp2, 1 - ratio)[0]
+
+def load_cn(paths, path_key):
+    if path_key not in paths:
+        return None
     try:
         return ControlNetLoader().load_controlnet(path)[0]
     except AttributeError:
         print('WARNING: skipping non-existent checkpoint ' + str(path))
         return None
 
+
+def load_sd_checkpoint(path):
+    chkp = CheckpointLoaderSimple().load_checkpoint(path)
+    return dict(sd=chkp[0], clip=chkp[1], vae=chkp[2])
+
+
+def load_upscale_model(path):
+    return UpscaleModelLoader().load_model(path)[0]
+
 def load_checkpoints(paths):
     init_custom_nodes()
     with torch.no_grad():
-        chkp = CheckpointLoaderSimple().load_checkpoint(paths['sd'])
-        ups, = UpscaleModelLoader().load_model(paths['upscale_model'])
-        cn_depth = ControlNetLoader().load_controlnet(paths['cn_depth'])[0]
+        sd = load_sd_checkpoint(paths['sd'])
+        ups = load_upscale_model(paths['upscale_model'])
+        cn_depth = load_cn(paths, 'cn_depth')
         return dict(
-            sd=chkp[0],
-            clip=chkp[1],
-            vae=chkp[2],
-            cn_openpose=load_cn(paths['cn_openpose']),
-            cn_lineart=load_cn(paths['cn_lineart']),
-            cn_normal=load_cn(paths['cn_normal']),
-            cn_canny=load_cn(paths['cn_canny']),
-            cn_scribble=load_cn(paths['cn_scribble']),
+            **sd,
+            cn_openpose=load_cn(paths, 'cn_openpose'),
+            cn_lineart=load_cn(paths, 'cn_lineart'),
+            cn_normal=load_cn(paths, 'cn_normal'),
+            cn_canny=load_cn(paths, 'cn_canny'),
+            cn_scribble=load_cn(paths, 'cn_scribble'),
             cn_leres_depth=cn_depth,
             cn_midas_depth=cn_depth,
-            cn_mediapipe_face=load_cn(paths['cn_mediapipe_face']),
-            cn_qr=load_cn(paths['cn_qr']),
+            cn_mediapipe_face=load_cn(paths, 'cn_mediapipe_face'),
+            cn_qr=load_cn(paths, 'cn_qr'),
             upscale_model=ups,
         )
 
@@ -97,6 +114,7 @@ def clip_encode(clip, text):
     # assert len(condition[0]) == 2 and condition[0][1] == {}
     # return condition
 
+
 def clip_set_last_layer(clip_chkp, last_layer=-1):
     ret, = CLIPSetLastLayer().set_last_layer(clip_chkp, last_layer)
     return ret
@@ -108,9 +126,10 @@ def sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,
         batch_index = [0] * latent_image['samples'].shape[0]
 
     for cond in [positive, negative]:
-        assert len(cond) == 1
-        assert len(cond[0]) == 2
-        assert not cond[0][1]
+        assert len(cond) >= 1
+        for c in cond:
+            assert len(c) == 2
+            assert not c[1]
     if cn is not None:
         positive = [[positive[0][0], {'control': cn}]]
     latents, = common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,

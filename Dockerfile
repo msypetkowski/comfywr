@@ -15,9 +15,9 @@ COPY requirements.txt .
 RUN pip install -U -r requirements.txt
 
 # uncomment for jupyterlab-vim plugin
-# RUN apt-get update --fix-missing
-# RUN apt install -y nodejs npm
-# RUN pip install jupyterlab jupyterlab-vim
+RUN apt-get update --fix-missing
+RUN apt install -y nodejs npm
+RUN pip install jupyterlab jupyterlab-vim
 
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility NVIDIA_VISIBLE_DEVICES=all
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfy_controlnet_preprocessors/
