@@ -14,9 +14,9 @@ from nodes import init_custom_nodes, ControlNetLoader, CheckpointLoaderSimple, E
     VAELoader, common_ksampler, CLIPSetLastLayer
 
 
-def control_net_set_create(checkpoint, initial_hint_image, strength):
+def control_net_set_create(checkpoint, initial_hint_image, strength, start_percent=0, end_percent=1):
     control_hint = initial_hint_image.movedim(-1, 1)
-    return checkpoint.copy().set_cond_hint(control_hint, strength)
+    return checkpoint.copy().set_cond_hint(control_hint, strength, (1.0 - start_percent, 1.0 - end_percent))
 
 
 def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength):
@@ -94,6 +94,7 @@ def load_checkpoints(paths):
             cn_midas_depth=cn_depth,
             cn_mediapipe_face=load_cn(paths, 'cn_mediapipe_face'),
             cn_qr=load_cn(paths, 'cn_qr'),
+            cn_qr2=load_cn(paths, 'cn_qr2'),
             upscale_model=ups,
         )
 
