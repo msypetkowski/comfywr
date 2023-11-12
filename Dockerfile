@@ -20,5 +20,5 @@ RUN apt install -y nodejs npm
 RUN pip install jupyterlab jupyterlab-vim
 
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility NVIDIA_VISIBLE_DEVICES=all
-ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfy_controlnet_preprocessors/
+ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfy_controlnet_preprocessors/:/workdir/blender_workdir/
 WORKDIR /workdir/ComfyUI/
