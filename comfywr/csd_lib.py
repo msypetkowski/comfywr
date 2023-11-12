@@ -58,11 +58,15 @@ def clip_merge_simple(chkp1, chkp2, ratio):
     return CLIPMergeSimple().merge(chkp1, chkp2, 1 - ratio)[0]
 
 
-def load_cn(paths, path_key):
+def load_cn(path):
+    return ControlNetLoader().load_controlnet(path)[0]
+
+
+def _load_cn_check(paths, path_key):
     if path_key not in paths:
         return None
     try:
-        return ControlNetLoader().load_controlnet(paths[path_key])[0]
+        return load_cn(paths[path_key])
     except AttributeError:
         print('WARNING: skipping non-existent checkpoint ' + str(paths[path_key]))
         return None
@@ -82,19 +86,19 @@ def load_checkpoints(paths):
     with torch.no_grad():
         sd = load_sd_checkpoint(paths['sd'])
         ups = load_upscale_model(paths['upscale_model'])
-        cn_depth = load_cn(paths, 'cn_depth')
+        cn_depth = _load_cn_check(paths, 'cn_depth')
         return dict(
             **sd,
-            cn_openpose=load_cn(paths, 'cn_openpose'),
-            cn_lineart=load_cn(paths, 'cn_lineart'),
-            cn_normal=load_cn(paths, 'cn_normal'),
-            cn_canny=load_cn(paths, 'cn_canny'),
-            cn_scribble=load_cn(paths, 'cn_scribble'),
+            cn_openpose=_load_cn_check(paths, 'cn_openpose'),
+            cn_lineart=_load_cn_check(paths, 'cn_lineart'),
+            cn_normal=_load_cn_check(paths, 'cn_normal'),
+            cn_canny=_load_cn_check(paths, 'cn_canny'),
+            cn_scribble=_load_cn_check(paths, 'cn_scribble'),
             cn_leres_depth=cn_depth,
             cn_midas_depth=cn_depth,
-            cn_mediapipe_face=load_cn(paths, 'cn_mediapipe_face'),
-            cn_qr=load_cn(paths, 'cn_qr'),
-            cn_qr2=load_cn(paths, 'cn_qr2'),
+            cn_mediapipe_face=_load_cn_check(paths, 'cn_mediapipe_face'),
+            cn_qr=_load_cn_check(paths, 'cn_qr'),
+            cn_qr2=_load_cn_check(paths, 'cn_qr2'),
             upscale_model=ups,
         )
 
