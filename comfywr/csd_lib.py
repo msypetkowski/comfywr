@@ -11,17 +11,21 @@ from custom_nodes.comfy_controlnet_preprocessors.nodes.pose import OpenPose_Prep
 from custom_nodes.comfy_controlnet_preprocessors.nodes.others import Media_Pipe_Face_Mesh_Preprocessor
 from nodes import init_custom_nodes, ControlNetLoader, CheckpointLoaderSimple, EmptyLatentImage, \
     CLIPTextEncode, LatentUpscale, LatentUpscaleBy, VAEDecode, VAEEncode, LoadImage, ImageScale, ImageScaleBy, \
-    VAELoader, common_ksampler, CLIPSetLastLayer
+    VAELoader, common_ksampler, CLIPSetLastLayer, LoraLoader
+
+
+def load_lora(model, clip, lora_name, strength_model, strength_clip):
+    return LoraLoader().load_lora(model, clip, lora_name, strength_model, strength_clip)
 
 
 def control_net_set_create(checkpoint, initial_hint_image, strength, start_percent=0, end_percent=1):
     control_hint = initial_hint_image.movedim(-1, 1)
-    return checkpoint.copy().set_cond_hint(control_hint, strength, (1.0 - start_percent, 1.0 - end_percent))
+    return checkpoint.copy().set_cond_hint(control_hint, strength, (start_percent, end_percent))
 
 
-def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength):
+def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength, start_percent=0, end_percent=1):
     control_hint = hint_image.movedim(-1, 1)
-    new_c_net = c_net.copy().set_cond_hint(control_hint, strength)
+    new_c_net = c_net.copy().set_cond_hint(control_hint, strength, (start_percent, end_percent))
     new_c_net.set_previous_controlnet(c_net_set)
     return new_c_net
 
