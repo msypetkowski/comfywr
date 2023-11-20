@@ -30,11 +30,11 @@ def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength, start_per
     return new_c_net
 
 
-def cn_preprocess(imgs, preprocess_alg):
+def cn_preprocess(imgs, preprocess_alg, **kwargs):
     if preprocess_alg == 'openpose':
         estimated, = OpenPose_Preprocessor().estimate_pose(imgs, *['enable'] * 3, 'v1.1')
     elif preprocess_alg == 'lineart':
-        estimated, = LineArt_Preprocessor().transform_lineart(imgs, coarse='enable')
+        estimated, = LineArt_Preprocessor().transform_lineart(imgs, **kwargs)
     elif preprocess_alg == 'scribble':
         estimated, = Scribble_Preprocessor().transform_scribble(imgs)
     elif preprocess_alg == 'normal':
