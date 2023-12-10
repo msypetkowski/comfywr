@@ -150,7 +150,7 @@ def hq_infer_txt(checkpoints, initial_w=16 * 64, initial_h=9 * 64, batch_size=1,
                  pos_txt='high quality photo', neg_txt='embedding:EasyNegative.safetensors',
                  sampler_settings=None, upscale_by=1.5, initial_denoise=1.0, upscaled_denoise=0.75,
                  use_upscaler=False, return_first_stage=False, clip_skip=None,
-                 no_upscale=False, initial_image=None, sampler_settings_stage2=None):
+                 no_upscale=False, initial_image=None, sampler_settings_stage2=None, style_image=None):
     chkp = checkpoints['clip']
     if clip_skip:
         chkp = clip_set_last_layer(chkp, -clip_skip)
@@ -158,14 +158,14 @@ def hq_infer_txt(checkpoints, initial_w=16 * 64, initial_h=9 * 64, batch_size=1,
     neg_condition = clip_encode(checkpoints['clip'], neg_txt)
     return hq_infer(checkpoints, initial_w, initial_h, batch_size, condition, neg_condition,
                     sampler_settings, upscale_by, initial_denoise, upscaled_denoise, use_upscaler, return_first_stage,
-                    no_upscale, initial_image, sampler_settings_stage2)
+                    no_upscale, initial_image, sampler_settings_stage2, style_image)
 
 
 @torch.no_grad()
 def hq_infer(checkpoints, initial_w, initial_h, batch_size, conditions, neg_conditions,
              sampler_settings, upscale_by=1.5, initial_denoise=1.0, upscaled_denoise=0.75,
              use_upscaler=False, return_first_stage=False, no_upscale=False,
-             initial_image=None, sampler_settings_stage2=None):
+             initial_image=None, sampler_settings_stage2=None, style_image=None):
     if sampler_settings_stage2 is None:
         sampler_settings_stage2 = sampler_settings
     if initial_image is None:

@@ -11,11 +11,27 @@ from custom_nodes.comfy_controlnet_preprocessors.nodes.pose import OpenPose_Prep
 from custom_nodes.comfy_controlnet_preprocessors.nodes.others import Media_Pipe_Face_Mesh_Preprocessor
 from nodes import init_custom_nodes, ControlNetLoader, CheckpointLoaderSimple, EmptyLatentImage, \
     CLIPTextEncode, LatentUpscale, LatentUpscaleBy, VAEDecode, VAEEncode, LoadImage, ImageScale, ImageScaleBy, \
-    VAELoader, common_ksampler, CLIPSetLastLayer, LoraLoader
+    VAELoader, common_ksampler, CLIPSetLastLayer, LoraLoader, StyleModelLoader, CLIPVisionLoader, CLIPVisionEncode, \
+    StyleModelApply
 
 
 def load_lora(model, clip, lora_name, strength_model, strength_clip):
     return LoraLoader().load_lora(model, clip, lora_name, strength_model, strength_clip)
+
+
+def load_style_model(model_name):
+    return StyleModelLoader().load_style_model(model_name)[0]
+
+
+def load_clip_vision(model_name):
+    return CLIPVisionLoader().load_clip(model_name)[0]
+
+
+def clip_vision_encode(clip_vision, img):
+    return CLIPVisionEncode().encode(clip_vision, img)[0]
+
+def apply_style_model(clip_vision_output, style_model, conditioning):
+    return StyleModelApply().apply_stylemodel(clip_vision_output, style_model, conditioning)[0]
 
 
 def control_net_set_create(checkpoint, initial_hint_image, strength, start_percent=0, end_percent=1):
