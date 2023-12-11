@@ -3,8 +3,7 @@ import torch
 
 from .csd_lib import create_empty_latent, clip_encode, sample, upscale_latent, upscale_latent_by, vae_decode, \
     load_image, vae_encode, image_upscale_w_model, image_scale, clip_set_last_layer, cn_preprocess, \
-    control_net_set_apply_hint, \
-    control_net_set_create
+    control_net_set_apply_hint, control_net_set_create, apply_style_model, clip_vision_encode
 from .my_lib import batch_conditions, interpolate_conditions, put_text
 
 
@@ -177,6 +176,9 @@ def hq_infer(checkpoints, initial_w, initial_h, batch_size, conditions, neg_cond
         else:
             upscaled = image_scale(initial_image, initial_w, initial_h)
         latent = vae_encode(checkpoints['vae'], upscaled)
+    if style_image is not None:
+        cv_enc = clip_vision_encode(checkpoints['clip_vision'], style_image)
+        conditions = apply_style_model(cv_enc, checkpoints['style_model'], conditions)
     small_latents = sample(checkpoints['sd'], positive=conditions, negative=neg_conditions,
                            latent_image=latent, denoise=initial_denoise, **sampler_settings)
     if no_upscale:
