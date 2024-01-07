@@ -50,26 +50,28 @@ def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength, start_per
 
 
 def cn_preprocess(imgs, preprocess_alg, **kwargs):
+    res = imgs.shape[1]
     if preprocess_alg == 'openpose':
-        estimated, = OpenPose_Preprocessor().estimate_pose(imgs, *['enable'] * 3, 'v1.1')
+        estimated, = OpenPose_Preprocessor().estimate_pose(imgs, *['enable'] * 3, 'v1.1', resolution=res)
     elif preprocess_alg == 'lineart':
-        estimated, = LineArt_Preprocessor().execute(imgs, **kwargs)
+        estimated, = LineArt_Preprocessor().execute(imgs, **kwargs, resolution=res)
     elif preprocess_alg == 'scribble':
-        estimated, = Scribble_Preprocessor().execute(imgs)
+        estimated, = Scribble_Preprocessor().execute(imgs, resolution=res)
     elif preprocess_alg == 'normal':
-        estimated, = MIDAS_Normal_Map_Preprocessor().execute(imgs, np.pi * 2, 0.05)
+        estimated, = MIDAS_Normal_Map_Preprocessor().execute(imgs, np.pi * 2, 0.05, resolution=res)
     elif preprocess_alg == 'midas_depth':
-        estimated, = MIDAS_Depth_Map_Preprocessor().execute(imgs, np.pi * 2, 0.05)
+        estimated, = MIDAS_Depth_Map_Preprocessor().execute(imgs, np.pi * 2, 0.05, resolution=res)
     elif preprocess_alg == 'leres_depth':
-        estimated, = LERES_Depth_Map_Preprocessor().execute(imgs, 0, 0)
+        estimated, = LERES_Depth_Map_Preprocessor().execute(imgs, 0, 0, resolution=res)
     elif preprocess_alg == 'canny':
-        estimated, = Canny_Edge_Preprocessor().execute(imgs, 30, 50, 'disable')
+        estimated, = Canny_Edge_Preprocessor().execute(imgs, 30, 50, 'disable', resolution=res)
     elif preprocess_alg == 'mediapipe_face':
-        estimated, = Media_Pipe_Face_Mesh_Preprocessor().detect(imgs, 2, 100)
+        estimated, = Media_Pipe_Face_Mesh_Preprocessor().detect(imgs, 2, 100, resolution=res)
     else:
         raise NotImplementedError(preprocess_alg)
     # estimated, = OpenPose_Preprocessor().estimate_pose(imgs, True, True, True, 'v1')
     # from custom_nodes.comfy_controlnet_preprocessors.nodes.edge_line import Scribble_Preprocessor
+    assert estimated.shape == imgs.shape, (estimated.shape, imgs.shape)
     return estimated
 
 
