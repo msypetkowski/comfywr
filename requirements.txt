@@ -3,3 +3,4 @@ mmengine==0.9.0
 pandas
 seaborn
 xformers
+mmengine
