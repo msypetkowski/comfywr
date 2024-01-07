@@ -19,5 +19,5 @@ COPY requirements.txt .
 RUN pip install -U -r requirements.txt
 
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility NVIDIA_VISIBLE_DEVICES=all
-ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfy_controlnet_preprocessors_aux/:/workdir/blender_workdir/
+ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
 WORKDIR /workdir/ComfyUI/

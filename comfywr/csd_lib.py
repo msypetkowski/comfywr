@@ -1,18 +1,20 @@
 import numpy as np
 import torch
-
-from comfy_extras.nodes_upscale_model import ImageUpscaleWithModel, UpscaleModelLoader
 from comfy_extras.nodes_model_merging import ModelMergeSimple, CLIPMergeSimple
-from custom_nodes.comfy_controlnet_preprocessors.nodes.edge_line import Canny_Edge_Preprocessor, LineArt_Preprocessor, \
-    Scribble_Preprocessor
-from custom_nodes.comfy_controlnet_preprocessors.nodes.normal_depth_map import MIDAS_Normal_Map_Preprocessor, \
-    MIDAS_Depth_Map_Preprocessor, LERES_Depth_Map_Preprocessor
-from custom_nodes.comfy_controlnet_preprocessors.nodes.pose import OpenPose_Preprocessor
-from custom_nodes.comfy_controlnet_preprocessors.nodes.others import Media_Pipe_Face_Mesh_Preprocessor
+from comfy_extras.nodes_upscale_model import ImageUpscaleWithModel, UpscaleModelLoader
 from nodes import init_custom_nodes, ControlNetLoader, CheckpointLoaderSimple, EmptyLatentImage, \
     CLIPTextEncode, LatentUpscale, LatentUpscaleBy, VAEDecode, VAEEncode, LoadImage, ImageScale, ImageScaleBy, \
-    VAELoader, common_ksampler, CLIPSetLastLayer, LoraLoader, StyleModelLoader, CLIPVisionLoader, CLIPVisionEncode, \
+    common_ksampler, CLIPSetLastLayer, LoraLoader, StyleModelLoader, CLIPVisionLoader, CLIPVisionEncode, \
     StyleModelApply
+
+from custom_nodes.comfyui_controlnet_aux.node_wrappers.canny import Canny_Edge_Preprocessor
+from custom_nodes.comfyui_controlnet_aux.node_wrappers.leres import LERES_Depth_Map_Preprocessor
+from custom_nodes.comfyui_controlnet_aux.node_wrappers.lineart import LineArt_Preprocessor
+from custom_nodes.comfyui_controlnet_aux.node_wrappers.mediapipe_face import Media_Pipe_Face_Mesh_Preprocessor
+from custom_nodes.comfyui_controlnet_aux.node_wrappers.midas import MIDAS_Normal_Map_Preprocessor, \
+    MIDAS_Depth_Map_Preprocessor
+from custom_nodes.comfyui_controlnet_aux.node_wrappers.openpose import OpenPose_Preprocessor
+from custom_nodes.comfyui_controlnet_aux.node_wrappers.scribble import Scribble_Preprocessor
 
 
 def load_lora(model, clip, lora_name, strength_model, strength_clip):
@@ -29,6 +31,7 @@ def load_clip_vision(model_name):
 
 def clip_vision_encode(clip_vision, img):
     return CLIPVisionEncode().encode(clip_vision, img)[0]
+
 
 def apply_style_model(clip_vision_output, style_model, conditioning):
     return StyleModelApply().apply_stylemodel(clip_vision_output, style_model, conditioning)[0]
@@ -50,17 +53,17 @@ def cn_preprocess(imgs, preprocess_alg, **kwargs):
     if preprocess_alg == 'openpose':
         estimated, = OpenPose_Preprocessor().estimate_pose(imgs, *['enable'] * 3, 'v1.1')
     elif preprocess_alg == 'lineart':
-        estimated, = LineArt_Preprocessor().transform_lineart(imgs, **kwargs)
+        estimated, = LineArt_Preprocessor().execute(imgs, **kwargs)
     elif preprocess_alg == 'scribble':
-        estimated, = Scribble_Preprocessor().transform_scribble(imgs)
+        estimated, = Scribble_Preprocessor().execute(imgs)
     elif preprocess_alg == 'normal':
-        estimated, = MIDAS_Normal_Map_Preprocessor().estimate_normal(imgs, np.pi * 2, 0.05)
+        estimated, = MIDAS_Normal_Map_Preprocessor().execute(imgs, np.pi * 2, 0.05)
     elif preprocess_alg == 'midas_depth':
-        estimated, = MIDAS_Depth_Map_Preprocessor().estimate_depth(imgs, np.pi * 2, 0.05)
+        estimated, = MIDAS_Depth_Map_Preprocessor().execute(imgs, np.pi * 2, 0.05)
     elif preprocess_alg == 'leres_depth':
-        estimated, = LERES_Depth_Map_Preprocessor().estimate_depth(imgs, 0, 0)
+        estimated, = LERES_Depth_Map_Preprocessor().execute(imgs, 0, 0)
     elif preprocess_alg == 'canny':
-        estimated, = Canny_Edge_Preprocessor().detect_edge(imgs, 30, 50, 'disable')
+        estimated, = Canny_Edge_Preprocessor().execute(imgs, 30, 50, 'disable')
     elif preprocess_alg == 'mediapipe_face':
         estimated, = Media_Pipe_Face_Mesh_Preprocessor().detect(imgs, 2, 100)
     else:
