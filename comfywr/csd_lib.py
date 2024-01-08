@@ -50,7 +50,8 @@ def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength, start_per
 
 
 def cn_preprocess(imgs, preprocess_alg, **kwargs):
-    res = imgs.shape[1]
+    # TODO: maybe consider selectin resolution differently
+    res = min(imgs.shape[1], imgs.shape[2])
     if preprocess_alg == 'openpose':
         estimated, = OpenPose_Preprocessor().estimate_pose(imgs, *['enable'] * 3, 'v1.1', resolution=res)
     elif preprocess_alg == 'lineart':
@@ -71,6 +72,7 @@ def cn_preprocess(imgs, preprocess_alg, **kwargs):
         raise NotImplementedError(preprocess_alg)
     # estimated, = OpenPose_Preprocessor().estimate_pose(imgs, True, True, True, 'v1')
     # from custom_nodes.comfy_controlnet_preprocessors.nodes.edge_line import Scribble_Preprocessor
+    estimated = image_scale(estimated, width=imgs.shape[2], height=imgs.shape[1])
     assert estimated.shape == imgs.shape, (estimated.shape, imgs.shape)
     return estimated
 
