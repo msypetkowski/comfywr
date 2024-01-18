@@ -26,8 +26,8 @@ git submodule update
 ./tools/download_basic_checkpoints.sh
 
 
-# for comfyui
-# ./tools/run_docker.sh
+# run ComfyUI
+./tools/run_docker.sh
 
 # for jupyter notebooks server
 # ./tools/run_docker_nb.sh
