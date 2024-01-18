@@ -22,10 +22,15 @@ git submodule update
 ./tools/apply_patches.sh
 ./tools/build_docker.sh
 
-# add your data (i.e. models, embeddings, etc) paths here so that the following script works
-# check the script for details
-export MY_DATA_ROOT=...
-./tools/run_docker_nb.sh
+# download some basic checkpoints
+./tools/download_basic_checkpoints.sh
+
+
+# for comfyui
+# ./tools/run_docker.sh
+
+# for jupyter notebooks server
+# ./tools/run_docker_nb.sh
 ```
 
 Examples
