@@ -1,13 +1,25 @@
-diff --git a/comfy/cli_args.py b/comfy/cli_args.py
-index 374dd2f..d602690 100644
---- a/comfy/cli_args.py
-+++ b/comfy/cli_args.py
-@@ -91,7 +91,7 @@ parser.add_argument("--windows-standalone-build", action="store_true", help="Win
+diff --git a/comfy_extras/nodes_mask.py b/comfy_extras/nodes_mask.py
+index a7d164b..bec4eb3 100644
+--- a/comfy_extras/nodes_mask.py
++++ b/comfy_extras/nodes_mask.py
+@@ -18,6 +18,8 @@ def composite(destination, source, x, y, mask = None, multiplier = 8, resize_sou
+     left, top = (x // multiplier, y // multiplier)
+     right, bottom = (left + source.shape[3], top + source.shape[2],)
  
- parser.add_argument("--disable-metadata", action="store_true", help="Disable saving prompt metadata in files.")
++    mask = (mask > 0).to(torch.float)
++
+     if mask is None:
+         mask = torch.ones_like(source)
+     else:
+@@ -147,7 +149,7 @@ class ImageColorToMask:
+     def image_to_mask(self, image, color):
+         temp = (torch.clamp(image, 0, 1.0) * 255.0).round().to(torch.int)
+         temp = torch.bitwise_left_shift(temp[:,:,:,0], 16) + torch.bitwise_left_shift(temp[:,:,:,1], 8) + temp[:,:,:,2]
+-        mask = torch.where(temp == color, 255, 0).float()
++        mask = torch.where(temp == color, 1, 0).float()
+         return (mask,)
  
--args = parser.parse_args()
-+args = parser.parse_args([])
- 
- if args.windows_standalone_build:
-     args.auto_launch = True
+ class SolidMask:
+diff --git a/output/_output_images_will_be_put_here b/output/_output_images_will_be_put_here
+deleted file mode 100644
+index e69de29..0000000

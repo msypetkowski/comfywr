@@ -52,11 +52,11 @@ def interpolate_conditions(cond1, cond2, coeff):
     return [[c2 * coeff + c1 * (1 - coeff), cond1[0][1]]]
 
 
-def animate_images(images, interval=10, save_path=None, fps=10):
+def animate_images(images, interval=10, save_path=None, fps=10, figsize_div=60):
     plt.style.use('dark_background')
     matplotlib.rcParams['animation.embed_limit'] = 10000
     # matplotlib.animation.embed_limit = dict(rc=10000)
-    fig = plt.figure(figsize=(images[0].shape[1] // 60, images[0].shape[0] // 60))
+    fig = plt.figure(figsize=(images[0].shape[1] // figsize_div, images[0].shape[0] // figsize_div))
     img = plt.imshow(images[0])
 
     def update(i):

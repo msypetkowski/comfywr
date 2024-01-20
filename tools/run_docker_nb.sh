@@ -1,5 +1,4 @@
 dest_data_root=/workdir/ComfyUI/models/
-
 docker run --gpus all --rm --ipc=host --net=host \
     -v `pwd`:/workdir/ \
     -v $MY_DATA_ROOT/models/Stable-diffusion/:$dest_data_root/checkpoints/ \

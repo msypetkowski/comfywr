@@ -1,2 +1,7 @@
 Pillow==9.5.0
+mmengine==0.9.0
+pandas
+seaborn
 xformers
+mmengine
+timm
