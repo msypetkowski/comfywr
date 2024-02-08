@@ -13,3 +13,15 @@
 [submodule "custom_nodes/comfyui_controlnet_aux"]
 	path = custom_nodes/comfyui_controlnet_aux
 	url = https://github.com/Fannovel16/comfyui_controlnet_aux.git
+[submodule "custom_nodes/ComfyUI-Frame-Interpolation"]
+	path = custom_nodes/ComfyUI-Frame-Interpolation
+	url = https://github.com/Fannovel16/ComfyUI-Frame-Interpolation.git
+[submodule "custom_nodes/ComfyUI_FizzNodes"]
+	path = custom_nodes/ComfyUI_FizzNodes
+	url = https://github.com/FizzleDorf/ComfyUI_FizzNodes.git
+[submodule "custom_nodes/ComfyUI-post-processing-nodes"]
+	path = custom_nodes/ComfyUI-post-processing-nodes
+	url = https://github.com/EllangoK/ComfyUI-post-processing-nodes.git
+[submodule "custom_nodes/was-node-suite-comfyui"]
+	path = custom_nodes/was-node-suite-comfyui
+	url = https://github.com/WASasquatch/was-node-suite-comfyui.git

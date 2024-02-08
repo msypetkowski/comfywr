@@ -3,6 +3,7 @@ mkdir -p downloaded_models/controlnet/
 mkdir -p downloaded_models/embeddings/
 mkdir -p downloaded_models/upscale_models/
 mkdir -p downloaded_models/loras/
+mkdir -p downloaded_models/vae/
 cd downloaded_models
 
 pushd checkpoints/
@@ -14,6 +15,9 @@ popd
 pushd controlnet/
 wget -nc https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11f1p_sd15_depth.pth
 wget -nc https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_scribble.pth
+wget -nc https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_openpose.pth
+# wget -nc https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_openpose_fp16.safetensors
+# wget -nc https://huggingface.co/lllyasviel/control_v11p_sd15_openpose/resolve/main/diffusion_pytorch_model.fp16.safetensors -O control_v11p_sd15_openpose_fp16.safetensors
 popd
 
 pushd embeddings/
@@ -26,4 +30,14 @@ popd
 
 pushd loras/
 wget -nc https://huggingface.co/latent-consistency/lcm-lora-sdv1-5/resolve/main/pytorch_lora_weights.safetensors
+wget -nc https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_adapter.ckpt
+popd
+
+pushd vae/
+wget -nc https://huggingface.co/stabilityai/sd-vae-ft-mse-original/resolve/main/vae-ft-mse-840000-ema-pruned.safetensors
+popd
+
+
+cd ../custom_nodes/ComfyUI-AnimateDiff-Evolved/models/
+wget -nc https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_mm.ckpt
 popd
