@@ -15,6 +15,9 @@ RUN pip install -r requirements.txt
 COPY custom_nodes/comfyui_controlnet_aux/requirements.txt .
 RUN pip install -r requirements.txt
 
+COPY custom_nodes/ComfyUI-Marigold/requirements.txt .
+RUN pip install -r requirements.txt
+
 COPY requirements.txt .
 RUN pip install -U -r requirements.txt
 
