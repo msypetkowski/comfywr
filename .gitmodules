@@ -26,5 +26,5 @@
 	path = custom_nodes/was-node-suite-comfyui
 	url = https://github.com/WASasquatch/was-node-suite-comfyui.git
 [submodule "custom_nodes/ComfyUI-Marigold"]
-	path = custom_nodes/ComfyUI-Marigold
+	path = custom_nodes/comfyui_marigold
 	url = https://github.com/kijai/ComfyUI-Marigold.git

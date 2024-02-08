@@ -16,6 +16,8 @@ from custom_nodes.comfyui_controlnet_aux.node_wrappers.midas import MIDAS_Normal
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.openpose import OpenPose_Preprocessor
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.scribble import Scribble_Preprocessor
 
+from custom_nodes.comfyui_marigold.nodes import MarigoldDepthEstimation
+
 
 def load_lora(model, clip, lora_name, strength_model, strength_clip):
     return LoraLoader().load_lora(model, clip, lora_name, strength_model, strength_clip)
@@ -75,6 +77,14 @@ def cn_preprocess(imgs, preprocess_alg, **kwargs):
     estimated = image_scale(estimated, width=imgs.shape[2], height=imgs.shape[1])
     assert estimated.shape == imgs.shape, (estimated.shape, imgs.shape)
     return estimated
+
+
+def run_marigold_depth_estimation(image):
+    return \
+    MarigoldDepthEstimation().process(image=image, seed=42, denoise_steps=10, n_repeat=10, regularizer_strength=0.02,
+                                      reduction_method='median', max_iter=5, tol=1e-3, invert=True,
+                                      keep_model_loaded=True, n_repeat_batch_size=2, use_fp16=True,
+                                      scheduler='DDIMScheduler', normalize=True)[0]
 
 
 def model_merge_simple(chkp1, chkp2, ratio):
