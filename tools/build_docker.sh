@@ -1,1 +1,1 @@
-docker build -t comfywr:latest .
+nvidia-docker build -t comfywr:latest .

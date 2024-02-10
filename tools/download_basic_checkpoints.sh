@@ -4,12 +4,14 @@ mkdir -p downloaded_models/embeddings/
 mkdir -p downloaded_models/upscale_models/
 mkdir -p downloaded_models/loras/
 mkdir -p downloaded_models/vae/
+mkdir -p downloaded_models/lgm/
 cd downloaded_models
 
 pushd checkpoints/
 wget -nc https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaper_8_pruned.safetensors
 wget -nc https://huggingface.co/Yntec/mistoonAnime2/resolve/main/mistoonAnime_v20_vae.safetensors
 wget -nc https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaperXL_Turbo_dpmppSdeKarras_half_pruned_6.safetensors
+wget -nc https://huggingface.co/stabilityai/stable-zero123/resolve/main/stable_zero123.ckpt
 popd
 
 pushd controlnet/
@@ -37,6 +39,9 @@ pushd vae/
 wget -nc https://huggingface.co/stabilityai/sd-vae-ft-mse-original/resolve/main/vae-ft-mse-840000-ema-pruned.safetensors
 popd
 
+pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/lgm/
+wget -nc https://huggingface.co/ashawkey/LGM/resolve/main/model_fp16.safetensors
+popd
 
 cd ../custom_nodes/ComfyUI-AnimateDiff-Evolved/models/
 wget -nc https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_mm.ckpt

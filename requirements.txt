@@ -5,3 +5,4 @@ seaborn
 xformers
 mmengine
 timm
+kiui==0.2.3

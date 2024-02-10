@@ -28,3 +28,6 @@
 [submodule "custom_nodes/ComfyUI-Marigold"]
 	path = custom_nodes/comfyui_marigold
 	url = https://github.com/kijai/ComfyUI-Marigold.git
+[submodule "custom_nodes/ComfyUI-3D-Pack"]
+	path = custom_nodes/ComfyUI-3D-Pack
+	url = https://github.com/MrForExample/ComfyUI-3D-Pack.git
