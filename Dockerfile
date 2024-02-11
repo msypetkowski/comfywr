@@ -57,5 +57,8 @@ RUN pip install rembg
 ENV FORCE_CUDA=1
 RUN pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 
+COPY custom_nodes/ComfyUI_essentials/requirements.txt .
+RUN pip install -r requirements.txt
+
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
 WORKDIR /workdir/ComfyUI/

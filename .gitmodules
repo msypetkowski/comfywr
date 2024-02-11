@@ -31,3 +31,6 @@
 [submodule "custom_nodes/ComfyUI-3D-Pack"]
 	path = custom_nodes/ComfyUI-3D-Pack
 	url = https://github.com/MrForExample/ComfyUI-3D-Pack.git
+[submodule "custom_nodes/ComfyUI_essentials"]
+	path = custom_nodes/ComfyUI_essentials
+	url = https://github.com/cubiq/ComfyUI_essentials.git
