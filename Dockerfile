@@ -22,17 +22,27 @@ RUN pip install -r requirements.txt
 COPY custom_nodes/comfyui_marigold/requirements.txt .
 RUN pip install -r requirements.txt
 
+COPY custom_nodes/ComfyUI_essentials/requirements.txt .
+RUN pip install -r requirements.txt
+
 COPY custom_nodes/ComfyUI-3D-Pack/requirements.txt .
 RUN pip install -r requirements.txt
+
+COPY custom_nodes/ComfyUI-3D-Pack/requirements_post.txt .
+COPY custom_nodes/ComfyUI-3D-Pack/tgs/ ./tgs/
+COPY custom_nodes/ComfyUI-3D-Pack/simple-knn/ ./simple-knn/
+
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility NVIDIA_VISIBLE_DEVICES=all
+ENV TORCH_CUDA_ARCH_LIST="8.9"
+ENV FORCE_CUDA=1
+# RUN pip install pytorch-cuda
+
+# RUN pip install -r requirements_post.txt
 
 COPY requirements.txt .
 RUN pip install -U -r requirements.txt
 
-# RUN pip install pytorch-cuda
 
-
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility NVIDIA_VISIBLE_DEVICES=all
-ENV TORCH_CUDA_ARCH_LIST="8.9"
 
 RUN git clone --recursive https://github.com/ashawkey/diff-gaussian-rasterization
 
@@ -57,8 +67,6 @@ RUN pip install rembg
 ENV FORCE_CUDA=1
 RUN pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 
-COPY custom_nodes/ComfyUI_essentials/requirements.txt .
-RUN pip install -r requirements.txt
 
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
 WORKDIR /workdir/ComfyUI/
