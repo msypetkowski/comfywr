@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from comfy_extras.nodes_model_merging import ModelMergeSimple, CLIPMergeSimple
 from comfy_extras.nodes_upscale_model import ImageUpscaleWithModel, UpscaleModelLoader
+from comfy_extras.nodes_clip_sdxl import CLIPTextEncodeSDXL
 from nodes import init_custom_nodes, ControlNetLoader, CheckpointLoaderSimple, EmptyLatentImage, \
     CLIPTextEncode, LatentUpscale, LatentUpscaleBy, VAEDecode, VAEEncode, LoadImage, ImageScale, ImageScaleBy, \
     common_ksampler, CLIPSetLastLayer, LoraLoader, StyleModelLoader, CLIPVisionLoader, CLIPVisionEncode, \
@@ -81,10 +82,11 @@ def cn_preprocess(imgs, preprocess_alg, **kwargs):
 
 def run_marigold_depth_estimation(image):
     return \
-    MarigoldDepthEstimation().process(image=image, seed=42, denoise_steps=10, n_repeat=10, regularizer_strength=0.02,
-                                      reduction_method='median', max_iter=5, tol=1e-3, invert=True,
-                                      keep_model_loaded=True, n_repeat_batch_size=2, use_fp16=True,
-                                      scheduler='DDIMScheduler', normalize=True)[0]
+        MarigoldDepthEstimation().process(image=image, seed=42, denoise_steps=10, n_repeat=10,
+                                          regularizer_strength=0.02,
+                                          reduction_method='median', max_iter=5, tol=1e-3, invert=True,
+                                          keep_model_loaded=True, n_repeat_batch_size=2, use_fp16=True,
+                                          scheduler='DDIMScheduler', normalize=True)[0]
 
 
 def model_merge_simple(chkp1, chkp2, ratio):
@@ -160,6 +162,13 @@ def clip_encode(clip, text):
     # return condition
 
 
+def clip_encode_sdxl(clip, width, height, crop_w, crop_h,
+                     target_width, target_height, text_g, text_l):
+    ret, = CLIPTextEncodeSDXL().encode(clip, width, height, crop_w, crop_h,
+                                       target_width, target_height, text_g, text_l)
+    return ret
+
+
 def clip_set_last_layer(clip_chkp, last_layer=-1):
     ret, = CLIPSetLastLayer().set_last_layer(clip_chkp, last_layer)
     return ret
@@ -174,9 +183,12 @@ def sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,
         assert len(cond) >= 1
         for c in cond:
             assert len(c) == 2
-            assert not c[1]
+            assert isinstance(c[1], dict)
+            # assert not c[1]
     if cn is not None:
-        positive = [[positive[0][0], {'control': cn, 'control_apply_to_uncond': True}]]
+        condition_kwargs = positive[0][1]
+        condition_kwargs.update({'control': cn, 'control_apply_to_uncond': True})
+        positive = [[positive[0][0], condition_kwargs]]
     latents, = common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,
                                dict(samples=latent_image['samples'], batch_index=batch_index),
                                denoise=denoise)
