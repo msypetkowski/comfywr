@@ -6,6 +6,7 @@ mkdir -p downloaded_models/loras/
 mkdir -p downloaded_models/vae/
 mkdir -p downloaded_models/lgm/
 mkdir -p downloaded_models/ipadapter/
+mkdir -p downloaded_models/style_models/
 mkdir -p downloaded_models/clip_vision/
 cd downloaded_models
 
@@ -58,6 +59,7 @@ popd
 pushd ipadapter/
 wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/models/ip-adapter-plus-face_sd15.safetensors
 
+wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/models/ip-adapter_sd15.safetensors
 wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sd15.bin
 wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sd15.bin
 wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sdxl.bin
@@ -67,7 +69,14 @@ wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapt
 wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors
 popd
 
+
+pushd style_models/
+wget -nc https://huggingface.co/TencentARC/T2I-Adapter/resolve/main/models/coadapter-style-sd15v1.pth
+popd
+
 pushd clip_vision/
+wget -nc https://huggingface.co/openai/clip-vit-large-patch14/resolve/main/pytorch_model.bin -O clip-vit-large-patch14.bin
+
 wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder/model.safetensors \
     -O CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors
 wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/image_encoder/model.safetensors \
