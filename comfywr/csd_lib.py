@@ -19,6 +19,22 @@ from custom_nodes.comfyui_controlnet_aux.node_wrappers.scribble import Scribble_
 
 from custom_nodes.comfyui_marigold.nodes import MarigoldDepthEstimation
 
+from custom_nodes.ComfyUI_IPAdapter_plus.IPAdapterPlus import IPAdapterModelLoader, IPAdapterApply
+
+
+def load_ipadapter(chkp_path):
+    ret, = IPAdapterModelLoader().load_ipadapter_model(chkp_path)
+    return ret
+
+
+def ip_adapter_apply(ipadapter, model, weight, clip_vision,
+                     image, noise=0.0, start_at=0.0, end_at=1.0):
+    ret = IPAdapterApply().apply_ipadapter(ipadapter=ipadapter, model=model, weight=weight, clip_vision=clip_vision,
+                                            image=image, noise=noise, start_at=start_at, end_at=end_at)
+    assert isinstance(ret, tuple)
+    ret, _, _ = ret
+    return ret
+
 
 def load_lora(model, clip, lora_name, strength_model, strength_clip):
     return LoraLoader().load_lora(model, clip, lora_name, strength_model, strength_clip)
