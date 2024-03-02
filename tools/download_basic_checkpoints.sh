@@ -5,6 +5,8 @@ mkdir -p downloaded_models/upscale_models/
 mkdir -p downloaded_models/loras/
 mkdir -p downloaded_models/vae/
 mkdir -p downloaded_models/lgm/
+mkdir -p downloaded_models/ipadapter/
+mkdir -p downloaded_models/clip_vision/
 cd downloaded_models
 
 pushd checkpoints/
@@ -33,6 +35,12 @@ popd
 pushd loras/
 wget -nc https://huggingface.co/latent-consistency/lcm-lora-sdv1-5/resolve/main/pytorch_lora_weights.safetensors
 wget -nc https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_adapter.ckpt
+
+wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sd15_lora.safetensors
+wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sd15_lora.safetensors
+wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sdxl_lora.safetensors
+wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sdxl_lora.safetensors
+wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sdxl_lora.safetensors
 popd
 
 pushd vae/
@@ -43,6 +51,25 @@ pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/lgm/
 wget -nc https://huggingface.co/ashawkey/LGM/resolve/main/model_fp16.safetensors
 popd
 
-cd ../custom_nodes/ComfyUI-AnimateDiff-Evolved/models/
+pushd ../custom_nodes/ComfyUI-AnimateDiff-Evolved/models/
 wget -nc https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_mm.ckpt
+popd
+
+pushd ipadapter/
+wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/models/ip-adapter-plus-face_sd15.safetensors
+
+wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sd15.bin
+wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sd15.bin
+wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sdxl.bin
+wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sdxl.bin
+
+wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter_sdxl.safetensors
+wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors
+popd
+
+pushd clip_vision/
+wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder/model.safetensors \
+    -O CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors
+wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/image_encoder/model.safetensors \
+    -O CLIP-ViT-bigG-14-laion2B-39B-b160k.safetensors
 popd
