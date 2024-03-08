@@ -67,6 +67,8 @@ RUN pip install rembg
 ENV FORCE_CUDA=1
 RUN pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 
+# RUN pip install torchmcubes
+RUN pip install git+https://github.com/tatsy/torchmcubes.git
 
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
 WORKDIR /workdir/ComfyUI/
