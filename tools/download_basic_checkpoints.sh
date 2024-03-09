@@ -52,6 +52,23 @@ pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/lgm/
 wget -nc https://huggingface.co/ashawkey/LGM/resolve/main/model_fp16.safetensors
 popd
 
+pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/flamehaze1115/
+# TODO
+popd
+
+pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/ashawkey/imagedream-ipmv-diffusers/unet/
+wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/unet/diffusion_pytorch_model.safetensors
+popd
+pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/ashawkey/imagedream-ipmv-diffusers/vae/
+wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/vae/diffusion_pytorch_model.safetensors
+popd
+pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/ashawkey/imagedream-ipmv-diffusers/image_encoder/
+wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/image_encoder/model.safetensors
+popd
+pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/ashawkey/imagedream-ipmv-diffusers/text_encoder/
+wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/text_encoder/model.safetensors
+popd
+
 pushd ../custom_nodes/ComfyUI-AnimateDiff-Evolved/models/
 wget -nc https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_mm.ckpt
 popd

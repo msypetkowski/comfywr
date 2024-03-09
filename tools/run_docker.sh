@@ -5,3 +5,5 @@ docker run --gpus=all --rm --net=host \
   -it comfywr:latest \
   bash -c "cd /workdir/ComfyUI/; python3 main.py --force-fp16"
   # bash -c "cd /workdir/ComfyUI/; bash"
+  # -e DISPLAY=$DISPLAY \
+  # -v /tmp/.X11-unix:/tmp/.X11-unix \

@@ -70,5 +70,13 @@ RUN pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 # RUN pip install torchmcubes
 RUN pip install git+https://github.com/tatsy/torchmcubes.git
 
+COPY custom_nodes/ComfyUI-KJNodes/requirements.txt .
+RUN pip install -r requirements.txt
+
+# uncomment for kiuikit:
+# RUN pip install git+https://github.com/ashawkey/kiuikit.git
+# RUN apt update && apt-get install -y mesa-common-dev libegl1-mesa-dev libgles2-mesa-dev
+# RUN apt-get install -y mesa-utils
+
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
 WORKDIR /workdir/ComfyUI/
