@@ -3,7 +3,7 @@ import torch
 
 from .csd_lib import create_empty_latent, clip_encode, clip_encode_sdxl, sample, upscale_latent_by, vae_decode, \
     load_image, vae_encode, image_upscale_w_model, image_scale, clip_set_last_layer, cn_preprocess, \
-    control_net_set_apply_hint, control_net_set_create, apply_style_model, clip_vision_encode, ip_adapter_apply
+    control_net_set_apply_hint, control_net_set_create, ip_adapter_apply
 from .my_lib import batch_conditions, interpolate_conditions, put_text
 
 
@@ -149,8 +149,7 @@ def hq_infer_txt(checkpoints, initial_w=16 * 64, initial_h=9 * 64, batch_size=1,
                  pos_txt='high quality photo', neg_txt='embedding:EasyNegative.safetensors',
                  sampler_settings=None, upscale_by=1.5, initial_denoise=1.0, upscaled_denoise=0.75,
                  use_upscaler=False, return_first_stage=False, clip_skip=None,
-                 no_upscale=False, initial_image=None, sampler_settings_stage2=None, style_image=None,
-                 style_images_pipeline='ipadapters', ipadapter_apply_kwargs=None, sdxl=False):
+                 no_upscale=False, initial_image=None, sampler_settings_stage2=None, style_entries=None, sdxl=False):
     chkp = checkpoints['clip']
     if clip_skip:
         chkp = clip_set_last_layer(chkp, -clip_skip)
@@ -165,16 +164,16 @@ def hq_infer_txt(checkpoints, initial_w=16 * 64, initial_h=9 * 64, batch_size=1,
         neg_condition = clip_encode_sdxl(checkpoints['clip'], cw, ch, 0, 0, cw, ch, neg_txt, neg_txt)
     return hq_infer(checkpoints, initial_w, initial_h, batch_size, condition, neg_condition,
                     sampler_settings, upscale_by, initial_denoise, upscaled_denoise, use_upscaler, return_first_stage,
-                    no_upscale, initial_image, sampler_settings_stage2, style_image, style_images_pipeline,
-                    ipadapter_apply_kwargs)
+                    no_upscale, initial_image, sampler_settings_stage2, style_entries)
 
 
 @torch.no_grad()
 def hq_infer(checkpoints, initial_w, initial_h, batch_size, conditions, neg_conditions,
              sampler_settings, upscale_by=1.5, initial_denoise=1.0, upscaled_denoise=0.75,
              use_upscaler=False, return_first_stage=False, no_upscale=False,
-             initial_image=None, sampler_settings_stage2=None,
-             style_image=None, style_images_pipeline='ipadapters', ipadapter_apply_kwargs=None):
+             initial_image=None, sampler_settings_stage2=None, style_entries=None):
+    if style_entries is None:
+        style_entries = []
     if sampler_settings_stage2 is None:
         sampler_settings_stage2 = sampler_settings
     if initial_image is None:
@@ -188,19 +187,12 @@ def hq_infer(checkpoints, initial_w, initial_h, batch_size, conditions, neg_cond
         latent = vae_encode(checkpoints['vae'], upscaled)
 
     sd_chkp = checkpoints['sd']
-    if style_image is not None:
-        if style_images_pipeline == 'style_coadapter':
-            cv_enc = clip_vision_encode(checkpoints['clip_vision'], style_image)
-            conditions = apply_style_model(cv_enc, checkpoints['style_model'], conditions)
-        elif style_images_pipeline == 'ipadapters':
-            assert ipadapter_apply_kwargs is not None
-            sd_chkp = ip_adapter_apply(ipadapter=checkpoints['ipadapter'],
-                                       model=checkpoints['sd'],
-                                       clip_vision=checkpoints['clip_vision'],
-                                       image=style_image,
-                                       **ipadapter_apply_kwargs)
-        else:
-            raise NotImplementedError('Unknown ' + f'{style_images_pipeline=}')
+    for style_entry in style_entries:
+        sd_chkp = ip_adapter_apply(ipadapter=checkpoints['ipadapter'],
+                                   model=sd_chkp,
+                                   clip_vision=checkpoints['clip_vision'],
+                                   image=load_image(style_entry['img_path'])[0],
+                                   **style_entry['ipadapter_apply_kwargs'])
 
     small_latents = sample(sd_chkp, positive=conditions, negative=neg_conditions,
                            latent_image=latent, denoise=initial_denoise, **sampler_settings)
