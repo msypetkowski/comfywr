@@ -22,11 +22,13 @@ from custom_nodes.comfyui_marigold.nodes import MarigoldDepthEstimation
 from custom_nodes.ComfyUI_IPAdapter_plus.IPAdapterPlus import IPAdapterModelLoader, IPAdapterApply
 
 
+@torch.no_grad()
 def load_ipadapter(chkp_path):
     ret, = IPAdapterModelLoader().load_ipadapter_model(chkp_path)
     return ret
 
 
+@torch.no_grad()
 def ip_adapter_apply(ipadapter, model, weight, clip_vision,
                      image, noise=0.0, start_at=0.0, end_at=1.0):
     ret = IPAdapterApply().apply_ipadapter(ipadapter=ipadapter, model=model, weight=weight, clip_vision=clip_vision,
@@ -36,31 +38,38 @@ def ip_adapter_apply(ipadapter, model, weight, clip_vision,
     return ret
 
 
+@torch.no_grad()
 def load_lora(model, clip, lora_name, strength_model, strength_clip):
     return LoraLoader().load_lora(model, clip, lora_name, strength_model, strength_clip)
 
 
+@torch.no_grad()
 def load_style_model(model_name):
     return StyleModelLoader().load_style_model(model_name)[0]
 
 
+@torch.no_grad()
 def load_clip_vision(model_name):
     return CLIPVisionLoader().load_clip(model_name)[0]
 
 
+@torch.no_grad()
 def clip_vision_encode(clip_vision, img):
     return CLIPVisionEncode().encode(clip_vision, img)[0]
 
 
+@torch.no_grad()
 def apply_style_model(clip_vision_output, style_model, conditioning):
     return StyleModelApply().apply_stylemodel(clip_vision_output, style_model, conditioning)[0]
 
 
+@torch.no_grad()
 def control_net_set_create(checkpoint, initial_hint_image, strength, start_percent=0, end_percent=1):
     control_hint = initial_hint_image.movedim(-1, 1)
     return checkpoint.copy().set_cond_hint(control_hint, strength, (start_percent, end_percent))
 
 
+@torch.no_grad()
 def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength, start_percent=0, end_percent=1):
     control_hint = hint_image.movedim(-1, 1)
     new_c_net = c_net.copy().set_cond_hint(control_hint, strength, (start_percent, end_percent))
@@ -68,6 +77,7 @@ def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength, start_per
     return new_c_net
 
 
+@torch.no_grad()
 def cn_preprocess(imgs, preprocess_alg, **kwargs):
     # TODO: maybe consider selectin resolution differently
     res = min(imgs.shape[1], imgs.shape[2])
@@ -96,6 +106,7 @@ def cn_preprocess(imgs, preprocess_alg, **kwargs):
     return estimated
 
 
+@torch.no_grad()
 def run_marigold_depth_estimation(image, **kwargs):
     kw = dict(image=image, seed=42, denoise_steps=10, n_repeat=10,
               regularizer_strength=0.02,
@@ -107,18 +118,22 @@ def run_marigold_depth_estimation(image, **kwargs):
         MarigoldDepthEstimation().process(**kw)[0]
 
 
+@torch.no_grad()
 def model_merge_simple(chkp1, chkp2, ratio):
     return ModelMergeSimple().merge(chkp1, chkp2, 1 - ratio)[0]
 
 
+@torch.no_grad()
 def clip_merge_simple(chkp1, chkp2, ratio):
     return CLIPMergeSimple().merge(chkp1, chkp2, 1 - ratio)[0]
 
 
+@torch.no_grad()
 def load_cn(path):
     return ControlNetLoader().load_controlnet(path)[0]
 
 
+@torch.no_grad()
 def _load_cn_check(paths, path_key):
     if path_key not in paths:
         return None
@@ -129,37 +144,40 @@ def _load_cn_check(paths, path_key):
         return None
 
 
+@torch.no_grad()
 def load_sd_checkpoint(path):
     chkp = CheckpointLoaderSimple().load_checkpoint(path)
     return dict(sd=chkp[0], clip=chkp[1], vae=chkp[2])
 
 
+@torch.no_grad()
 def load_upscale_model(path):
     return UpscaleModelLoader().load_model(path)[0]
 
 
+@torch.no_grad()
 def load_checkpoints(paths):
     init_custom_nodes()
-    with torch.no_grad():
-        sd = load_sd_checkpoint(paths['sd'])
-        ups = load_upscale_model(paths['upscale_model'])
-        cn_depth = _load_cn_check(paths, 'cn_depth')
-        return dict(
-            **sd,
-            cn_openpose=_load_cn_check(paths, 'cn_openpose'),
-            cn_lineart=_load_cn_check(paths, 'cn_lineart'),
-            cn_normal=_load_cn_check(paths, 'cn_normal'),
-            cn_canny=_load_cn_check(paths, 'cn_canny'),
-            cn_scribble=_load_cn_check(paths, 'cn_scribble'),
-            cn_leres_depth=cn_depth,
-            cn_midas_depth=cn_depth,
-            cn_mediapipe_face=_load_cn_check(paths, 'cn_mediapipe_face'),
-            cn_qr=_load_cn_check(paths, 'cn_qr'),
-            cn_qr2=_load_cn_check(paths, 'cn_qr2'),
-            upscale_model=ups,
-        )
+    sd = load_sd_checkpoint(paths['sd'])
+    ups = load_upscale_model(paths['upscale_model'])
+    cn_depth = _load_cn_check(paths, 'cn_depth')
+    return dict(
+        **sd,
+        cn_openpose=_load_cn_check(paths, 'cn_openpose'),
+        cn_lineart=_load_cn_check(paths, 'cn_lineart'),
+        cn_normal=_load_cn_check(paths, 'cn_normal'),
+        cn_canny=_load_cn_check(paths, 'cn_canny'),
+        cn_scribble=_load_cn_check(paths, 'cn_scribble'),
+        cn_leres_depth=cn_depth,
+        cn_midas_depth=cn_depth,
+        cn_mediapipe_face=_load_cn_check(paths, 'cn_mediapipe_face'),
+        cn_qr=_load_cn_check(paths, 'cn_qr'),
+        cn_qr2=_load_cn_check(paths, 'cn_qr2'),
+        upscale_model=ups,
+    )
 
 
+@torch.no_grad()
 def create_empty_latent(width, height, batch_size):
     latent, = EmptyLatentImage().generate(width, height, batch_size)
     return latent
@@ -167,6 +185,7 @@ def create_empty_latent(width, height, batch_size):
     # latent['batch_index'] = 0
 
 
+@torch.no_grad()
 def clip_encode(clip, text):
     condition, = CLIPTextEncode().encode(clip, text)
     # TODO add asserts
@@ -180,6 +199,7 @@ def clip_encode(clip, text):
     # return condition
 
 
+@torch.no_grad()
 def clip_encode_sdxl(clip, width, height, crop_w, crop_h,
                      target_width, target_height, text_g, text_l):
     ret, = CLIPTextEncodeSDXL().encode(clip, width, height, crop_w, crop_h,
@@ -187,11 +207,13 @@ def clip_encode_sdxl(clip, width, height, crop_w, crop_h,
     return ret
 
 
+@torch.no_grad()
 def clip_set_last_layer(clip_chkp, last_layer=-1):
     ret, = CLIPSetLastLayer().set_last_layer(clip_chkp, last_layer)
     return ret
 
 
+@torch.no_grad()
 def sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise=1.0,
            batch_index=None, cn=None):
     if batch_index is None:
@@ -213,6 +235,7 @@ def sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,
     return latents
 
 
+@torch.no_grad()
 def image_scale(image, width, height, crop='disabled'):
     image, = ImageScale().upscale(image, 'bicubic', width, height, crop)
     image -= image.min()
@@ -220,36 +243,43 @@ def image_scale(image, width, height, crop='disabled'):
     return image
 
 
+@torch.no_grad()
 def image_scale_by(image, by):
     image, = ImageScaleBy().upscale(image, 'bicubic', by)
     return image
 
 
+@torch.no_grad()
 def image_upscale_w_model(checkpoint, image):
     ret, = ImageUpscaleWithModel().upscale(checkpoint, image)
     return ret
 
 
+@torch.no_grad()
 def upscale_latent(latent, width, height):
     latent, = LatentUpscale().upscale(latent, 'bilinear', width, height, 'disabled')
     return latent
 
 
+@torch.no_grad()
 def upscale_latent_by(latent, by):
     latent, = LatentUpscaleBy().upscale(latent, 'bilinear', by)
     return latent
 
 
+@torch.no_grad()
 def vae_decode(checkpoint, latent):
     ret, = VAEDecode().decode(checkpoint, latent)
     return ret
 
 
+@torch.no_grad()
 def vae_encode(checkpoint, image):
     ret, = VAEEncode().encode(checkpoint, image)
     return ret
 
 
+@torch.no_grad()
 def load_image(path):
     img, mask = LoadImage().load_image(path)
     return img, mask
