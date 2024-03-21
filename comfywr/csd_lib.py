@@ -30,7 +30,7 @@ def load_ipadapter(chkp_path):
 def ip_adapter_apply(ipadapter, model, weight, clip_vision,
                      image, noise=0.0, start_at=0.0, end_at=1.0):
     ret = IPAdapterApply().apply_ipadapter(ipadapter=ipadapter, model=model, weight=weight, clip_vision=clip_vision,
-                                            image=image, noise=noise, start_at=start_at, end_at=end_at)
+                                           image=image, noise=noise, start_at=start_at, end_at=end_at)
     assert isinstance(ret, tuple)
     ret, _, _ = ret
     return ret
@@ -96,13 +96,15 @@ def cn_preprocess(imgs, preprocess_alg, **kwargs):
     return estimated
 
 
-def run_marigold_depth_estimation(image):
+def run_marigold_depth_estimation(image, **kwargs):
+    kw = dict(image=image, seed=42, denoise_steps=10, n_repeat=10,
+              regularizer_strength=0.02,
+              reduction_method='median', max_iter=5, tol=1e-3, invert=True,
+              keep_model_loaded=True, n_repeat_batch_size=2, use_fp16=True,
+              scheduler='DDIMScheduler', normalize=True)
+    kw.update(**kwargs)
     return \
-        MarigoldDepthEstimation().process(image=image, seed=42, denoise_steps=10, n_repeat=10,
-                                          regularizer_strength=0.02,
-                                          reduction_method='median', max_iter=5, tol=1e-3, invert=True,
-                                          keep_model_loaded=True, n_repeat_batch_size=2, use_fp16=True,
-                                          scheduler='DDIMScheduler', normalize=True)[0]
+        MarigoldDepthEstimation().process(**kw)[0]
 
 
 def model_merge_simple(chkp1, chkp2, ratio):
