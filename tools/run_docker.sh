@@ -7,3 +7,5 @@ docker run --gpus=all --rm --net=host \
   # bash -c "cd /workdir/ComfyUI/; bash"
   # -e DISPLAY=$DISPLAY \
   # -v /tmp/.X11-unix:/tmp/.X11-unix \
+  # --device=/dev/video0:/dev/video0 \
+  # --device=/dev/video1:/dev/video1 \
