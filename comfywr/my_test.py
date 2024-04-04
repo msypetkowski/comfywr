@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 
-from .csd_lib import create_empty_latent, clip_encode, sample, upscale_latent, upscale_latent_by, vae_decode, \
+from .csd_lib import create_empty_latent, clip_encode, clip_encode_sdxl, sample, upscale_latent_by, vae_decode, \
     load_image, vae_encode, image_upscale_w_model, image_scale, clip_set_last_layer, cn_preprocess, \
-    control_net_set_apply_hint, control_net_set_create, apply_style_model, clip_vision_encode
+    control_net_set_apply_hint, control_net_set_create, ip_adapter_apply
 from .my_lib import batch_conditions, interpolate_conditions, put_text
 
 
@@ -149,22 +149,31 @@ def hq_infer_txt(checkpoints, initial_w=16 * 64, initial_h=9 * 64, batch_size=1,
                  pos_txt='high quality photo', neg_txt='embedding:EasyNegative.safetensors',
                  sampler_settings=None, upscale_by=1.5, initial_denoise=1.0, upscaled_denoise=0.75,
                  use_upscaler=False, return_first_stage=False, clip_skip=None,
-                 no_upscale=False, initial_image=None, sampler_settings_stage2=None, style_image=None):
+                 no_upscale=False, initial_image=None, sampler_settings_stage2=None, style_entries=None, sdxl=False):
     chkp = checkpoints['clip']
     if clip_skip:
         chkp = clip_set_last_layer(chkp, -clip_skip)
-    condition = clip_encode(chkp, pos_txt)
-    neg_condition = clip_encode(checkpoints['clip'], neg_txt)
+    if not sdxl:
+        condition = clip_encode(chkp, pos_txt)
+        neg_condition = clip_encode(checkpoints['clip'], neg_txt)
+    else:
+        # def clip_encode_sdxl(clip, width, height, crop_w, crop_h,
+        #                      target_width, target_height, text_g, text_l):
+        cw, ch = round(initial_w * upscale_by), round(initial_h * upscale_by)
+        condition = clip_encode_sdxl(chkp, cw, ch, 0, 0, cw, ch, pos_txt, pos_txt)
+        neg_condition = clip_encode_sdxl(checkpoints['clip'], cw, ch, 0, 0, cw, ch, neg_txt, neg_txt)
     return hq_infer(checkpoints, initial_w, initial_h, batch_size, condition, neg_condition,
                     sampler_settings, upscale_by, initial_denoise, upscaled_denoise, use_upscaler, return_first_stage,
-                    no_upscale, initial_image, sampler_settings_stage2, style_image)
+                    no_upscale, initial_image, sampler_settings_stage2, style_entries)
 
 
 @torch.no_grad()
 def hq_infer(checkpoints, initial_w, initial_h, batch_size, conditions, neg_conditions,
              sampler_settings, upscale_by=1.5, initial_denoise=1.0, upscaled_denoise=0.75,
              use_upscaler=False, return_first_stage=False, no_upscale=False,
-             initial_image=None, sampler_settings_stage2=None, style_image=None):
+             initial_image=None, sampler_settings_stage2=None, style_entries=None):
+    if style_entries is None:
+        style_entries = []
     if sampler_settings_stage2 is None:
         sampler_settings_stage2 = sampler_settings
     if initial_image is None:
@@ -176,10 +185,16 @@ def hq_infer(checkpoints, initial_w, initial_h, batch_size, conditions, neg_cond
         else:
             upscaled = image_scale(initial_image, initial_w, initial_h)
         latent = vae_encode(checkpoints['vae'], upscaled)
-    if style_image is not None:
-        cv_enc = clip_vision_encode(checkpoints['clip_vision'], style_image)
-        conditions = apply_style_model(cv_enc, checkpoints['style_model'], conditions)
-    small_latents = sample(checkpoints['sd'], positive=conditions, negative=neg_conditions,
+
+    sd_chkp = checkpoints['sd']
+    for style_entry in style_entries:
+        sd_chkp = ip_adapter_apply(ipadapter=checkpoints['ipadapter'],
+                                   model=sd_chkp,
+                                   clip_vision=checkpoints['clip_vision'],
+                                   image=load_image(style_entry['img_path'])[0],
+                                   **style_entry['ipadapter_apply_kwargs'])
+
+    small_latents = sample(sd_chkp, positive=conditions, negative=neg_conditions,
                            latent_image=latent, denoise=initial_denoise, **sampler_settings)
     if no_upscale:
         small_img = vae_decode(checkpoints['vae'], small_latents)
@@ -188,11 +203,12 @@ def hq_infer(checkpoints, initial_w, initial_h, batch_size, conditions, neg_cond
         if use_upscaler:
             decoded = vae_decode(checkpoints['vae'], small_latents)
             upscaled = image_upscale_w_model(checkpoints['upscale_model'], decoded)
-            upscaled = image_scale(upscaled, int(initial_w * upscale_by), int(initial_h * upscale_by))
+            # TODO: * 2 is arbitrary0
+            upscaled = image_scale(upscaled, int(initial_w * upscale_by * 2), int(initial_h * upscale_by * 2))
             big_latents = vae_encode(checkpoints['vae'], upscaled)
         else:
             big_latents = upscale_latent_by(small_latents, upscale_by)
-        big_latents = sample(checkpoints['sd'], positive=conditions, negative=neg_conditions,
+        big_latents = sample(sd_chkp, positive=conditions, negative=neg_conditions,
                              latent_image=big_latents, denoise=upscaled_denoise, **sampler_settings_stage2)
         large_img = vae_decode(checkpoints['vae'], big_latents)
     if return_first_stage:
