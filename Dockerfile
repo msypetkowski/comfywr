@@ -53,6 +53,8 @@ ENV CUDA_PATH=/usr/local/cuda-12.3
 RUN pip install ./diff-gaussian-rasterization
 
 RUN pip install git+https://github.com/NVlabs/nvdiffrast
+RUN pip install git+https://github.com/rusty1s/pytorch_scatter.git
+
 
 RUN pip install numba numexpr
 
@@ -71,6 +73,18 @@ RUN pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 RUN pip install git+https://github.com/tatsy/torchmcubes.git
 
 COPY custom_nodes/ComfyUI-KJNodes/requirements.txt .
+RUN pip install -r requirements.txt
+
+# this is for the ultra upsccale node pack
+RUN pip install ultralytics==8.2.1
+
+COPY custom_nodes/ComfyUI-Impact-Pack/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI-Inspire-Pack/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/efficiency-nodes-comfyui/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/comfy-image-saver/requirements.txt .
 RUN pip install -r requirements.txt
 
 # uncomment for kiuikit:
