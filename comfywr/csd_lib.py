@@ -1,13 +1,10 @@
 import numpy as np
 import torch
+
+from comfy_extras.nodes_clip_sdxl import CLIPTextEncodeSDXL
 from comfy_extras.nodes_model_merging import ModelMergeSimple, CLIPMergeSimple
 from comfy_extras.nodes_upscale_model import ImageUpscaleWithModel, UpscaleModelLoader
-from comfy_extras.nodes_clip_sdxl import CLIPTextEncodeSDXL
-from nodes import init_custom_nodes, ControlNetLoader, CheckpointLoaderSimple, EmptyLatentImage, \
-    CLIPTextEncode, LatentUpscale, LatentUpscaleBy, VAEDecode, VAEEncode, LoadImage, ImageScale, ImageScaleBy, \
-    common_ksampler, CLIPSetLastLayer, LoraLoader, StyleModelLoader, CLIPVisionLoader, CLIPVisionEncode, \
-    StyleModelApply
-
+from custom_nodes.ComfyUI_IPAdapter_plus.IPAdapterPlus import IPAdapterModelLoader, IPAdapterAdvanced
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.canny import Canny_Edge_Preprocessor
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.leres import LERES_Depth_Map_Preprocessor
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.lineart import LineArt_Preprocessor
@@ -16,10 +13,11 @@ from custom_nodes.comfyui_controlnet_aux.node_wrappers.midas import MIDAS_Normal
     MIDAS_Depth_Map_Preprocessor
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.openpose import OpenPose_Preprocessor
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.scribble import Scribble_Preprocessor
-
 from custom_nodes.comfyui_marigold.nodes import MarigoldDepthEstimation
-
-from custom_nodes.ComfyUI_IPAdapter_plus.IPAdapterPlus import IPAdapterModelLoader, IPAdapterApply
+from nodes import init_custom_nodes, ControlNetLoader, CheckpointLoaderSimple, EmptyLatentImage, \
+    CLIPTextEncode, LatentUpscale, LatentUpscaleBy, VAEDecode, VAEEncode, LoadImage, ImageScale, ImageScaleBy, \
+    common_ksampler, CLIPSetLastLayer, LoraLoader, StyleModelLoader, CLIPVisionLoader, CLIPVisionEncode, \
+    StyleModelApply
 
 
 @torch.no_grad()
@@ -30,11 +28,12 @@ def load_ipadapter(chkp_path):
 
 @torch.no_grad()
 def ip_adapter_apply(ipadapter, model, weight, clip_vision,
-                     image, noise=0.0, start_at=0.0, end_at=1.0):
-    ret = IPAdapterApply().apply_ipadapter(ipadapter=ipadapter, model=model, weight=weight, clip_vision=clip_vision,
-                                           image=image, noise=noise, start_at=start_at, end_at=end_at)
+                     image, start_at=0.0, end_at=1.0, weight_type='strong_style_transfer'):
+    ret = IPAdapterAdvanced().apply_ipadapter(ipadapter=ipadapter, model=model, weight=weight, clip_vision=clip_vision,
+                                              image=image, start_at=start_at, end_at=end_at,
+                                              weight_type=weight_type)
     assert isinstance(ret, tuple)
-    ret, _, _ = ret
+    ret, = ret
     return ret
 
 
@@ -238,8 +237,8 @@ def sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,
 @torch.no_grad()
 def image_scale(image, width, height, crop='disabled'):
     image, = ImageScale().upscale(image, 'bicubic', width, height, crop)
-    image -= image.min()
-    image /= image.max()
+    # image -= image.min()
+    # image /= image.max()
     return image
 
 
