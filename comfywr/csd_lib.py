@@ -107,14 +107,21 @@ def cn_preprocess(imgs, preprocess_alg, **kwargs):
 
 @torch.no_grad()
 def run_marigold_depth_estimation(image, **kwargs):
+    inference_scale = kwargs['inference_scale']
+    if inference_scale != 1.0:
+        _, h, w, _ = image.shape
+        image = image_scale_by(image, inference_scale)
+    kwargs.pop('inference_scale')
     kw = dict(image=image, seed=42, denoise_steps=10, n_repeat=10,
               regularizer_strength=0.02,
               reduction_method='median', max_iter=5, tol=1e-3, invert=True,
               keep_model_loaded=True, n_repeat_batch_size=2, use_fp16=True,
               scheduler='DDIMScheduler', normalize=True)
     kw.update(**kwargs)
-    return \
-        MarigoldDepthEstimation().process(**kw)[0]
+    ret, = MarigoldDepthEstimation().process(**kw)
+    if inference_scale != 1.0:
+        ret = image_scale(ret, w, h)
+    return ret
 
 
 @torch.no_grad()
