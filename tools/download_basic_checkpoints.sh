@@ -70,6 +70,11 @@ pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/ashawkey/imagedream-ipmv-diffu
 wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/text_encoder/model.safetensors
 popd
 
+pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
+wget -nc https://huggingface.co/camenduru/CRM/resolve/main/pixel-diffusion.pth
+wget -nc https://huggingface.co/camenduru/CRM/resolve/main/ccm-diffusion.pth
+popd
+
 pushd ../custom_nodes/ComfyUI-AnimateDiff-Evolved/models/
 wget -nc https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_mm.ckpt
 popd

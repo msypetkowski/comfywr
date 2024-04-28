@@ -58,3 +58,6 @@
 [submodule "custom_nodes/comfy-image-saver"]
 	path = custom_nodes/comfy-image-saver
 	url = https://github.com/giriss/comfy-image-saver.git
+[submodule "custom_nodes/ComfyUI-InstantMesh"]
+	path = custom_nodes/ComfyUI-InstantMesh
+	url = https://github.com/jtydhr88/ComfyUI-InstantMesh.git

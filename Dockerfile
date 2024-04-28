@@ -86,6 +86,8 @@ COPY custom_nodes/efficiency-nodes-comfyui/requirements.txt .
 RUN pip install -r requirements.txt
 COPY custom_nodes/comfy-image-saver/requirements.txt .
 RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI-InstantMesh/requirements.txt .
+RUN pip install -r requirements.txt
 
 # uncomment for kiuikit:
 # RUN pip install git+https://github.com/ashawkey/kiuikit.git
