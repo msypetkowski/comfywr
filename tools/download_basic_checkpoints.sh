@@ -70,11 +70,6 @@ pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/ashawkey/imagedream-ipmv-diffu
 wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/text_encoder/model.safetensors
 popd
 
-pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
-wget -nc https://huggingface.co/camenduru/CRM/resolve/main/pixel-diffusion.pth
-wget -nc https://huggingface.co/camenduru/CRM/resolve/main/ccm-diffusion.pth
-popd
-
 pushd ../custom_nodes/ComfyUI-AnimateDiff-Evolved/models/
 wget -nc https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_mm.ckpt
 popd
@@ -104,4 +99,11 @@ wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder
     -O CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors
 wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/image_encoder/model.safetensors \
     -O CLIP-ViT-bigG-14-laion2B-39B-b160k.safetensors
+popd
+
+mkdir ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
+pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
+wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/pixel-diffusion.pth
+wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/ccm-diffusion.pth
+wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/CRM.pth
 popd

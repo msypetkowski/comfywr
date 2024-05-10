@@ -82,8 +82,8 @@ COPY custom_nodes/ComfyUI-Impact-Pack/requirements.txt .
 RUN pip install -r requirements.txt
 COPY custom_nodes/ComfyUI-Inspire-Pack/requirements.txt .
 RUN pip install -r requirements.txt
-COPY custom_nodes/efficiency-nodes-comfyui/requirements.txt .
-RUN pip install -r requirements.txt
+# COPY custom_nodes/efficiency-nodes-comfyui/requirements.txt .
+# RUN pip install -r requirements.txt
 COPY custom_nodes/comfy-image-saver/requirements.txt .
 RUN pip install -r requirements.txt
 COPY custom_nodes/ComfyUI-InstantMesh/requirements.txt .
