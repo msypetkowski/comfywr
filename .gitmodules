@@ -52,3 +52,6 @@
 [submodule "custom_nodes/comfy-image-saver"]
 	path = custom_nodes/comfy-image-saver
 	url = https://github.com/giriss/comfy-image-saver.git
+[submodule "custom_nodes/ComfyUI_UltimateSDUpscale"]
+	path = custom_nodes/ComfyUI_UltimateSDUpscale
+	url = https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git
