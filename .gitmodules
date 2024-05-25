@@ -43,9 +43,6 @@
 [submodule "custom_nodes/ComfyUI-Impact-Pack"]
 	path = custom_nodes/ComfyUI-Impact-Pack
 	url = https://github.com/ltdrdata/ComfyUI-Impact-Pack.git
-[submodule "custom_nodes/ComfyUI_UltimateSDUpscale"]
-	path = custom_nodes/ComfyUI_UltimateSDUpscale
-	url = https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git
 [submodule "custom_nodes/ComfyUI-Inspire-Pack"]
 	path = custom_nodes/ComfyUI-Inspire-Pack
 	url = https://github.com/ltdrdata/ComfyUI-Inspire-Pack.git
