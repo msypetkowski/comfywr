@@ -32,6 +32,8 @@ popd
 
 pushd upscale_models/
 wget -nc https://huggingface.co/spaces/Marne/Real-ESRGAN/resolve/main/RealESRGAN_x4plus.pth
+wget -nc "https://civitai.com/api/download/models/125843" -O 4xUltrasharp.pt
+
 popd
 
 pushd loras/
