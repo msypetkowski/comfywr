@@ -33,7 +33,7 @@ def ip_adapter_apply(ipadapter, model, weight, clip_vision,
                                               image=image, start_at=start_at, end_at=end_at,
                                               weight_type=weight_type)
     assert isinstance(ret, tuple)
-    ret, = ret
+    ret, _ = ret
     return ret
 
 
