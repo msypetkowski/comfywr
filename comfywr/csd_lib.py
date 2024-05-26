@@ -21,6 +21,22 @@ from nodes import init_custom_nodes, ControlNetLoader, CheckpointLoaderSimple, E
 
 
 @torch.no_grad()
+def ultimate_sd_upscale(image, model, positive, negative, vae, upscale_by, seed,
+                        steps, cfg, sampler_name, scheduler, denoise, upscale_model,
+                        mode_type='Linear', tile_width=512, tile_height=512, mask_blur=8, tile_padding=32,
+                        seam_fix_mode='None', seam_fix_denoise=1.0, seam_fix_mask_blur=8,
+                        seam_fix_width=64, seam_fix_padding=16, force_uniform_tiles=True, tiled_decode=False):
+    from nodes import NODE_CLASS_MAPPINGS
+    cls = NODE_CLASS_MAPPINGS['UltimateSDUpscale']
+    img, = cls().upscale(image, model, positive, negative, vae, upscale_by, seed,
+                         steps, cfg, sampler_name, scheduler, denoise, upscale_model,
+                         mode_type, tile_width, tile_height, mask_blur, tile_padding,
+                         seam_fix_mode, seam_fix_denoise, seam_fix_mask_blur,
+                         seam_fix_width, seam_fix_padding, force_uniform_tiles, tiled_decode)
+    return img
+
+
+@torch.no_grad()
 def load_ipadapter(chkp_path):
     ret, = IPAdapterModelLoader().load_ipadapter_model(chkp_path)
     return ret
