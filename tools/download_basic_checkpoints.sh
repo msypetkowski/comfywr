@@ -32,6 +32,8 @@ popd
 
 pushd upscale_models/
 wget -nc https://huggingface.co/spaces/Marne/Real-ESRGAN/resolve/main/RealESRGAN_x4plus.pth
+wget -nc "https://civitai.com/api/download/models/125843" -O 4xUltrasharp.pt
+
 popd
 
 pushd loras/
@@ -99,4 +101,11 @@ wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder
     -O CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors
 wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/image_encoder/model.safetensors \
     -O CLIP-ViT-bigG-14-laion2B-39B-b160k.safetensors
+popd
+
+mkdir ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
+pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
+wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/pixel-diffusion.pth
+wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/ccm-diffusion.pth
+wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/CRM.pth
 popd
