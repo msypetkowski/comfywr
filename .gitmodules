@@ -55,3 +55,9 @@
 [submodule "custom_nodes/ComfyUI_UltimateSDUpscale"]
 	path = custom_nodes/ComfyUI_UltimateSDUpscale
 	url = https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git
+[submodule "custom_nodes/ComfyUI-ModelUnloader"]
+	path = custom_nodes/ComfyUI-ModelUnloader
+	url = https://github.com/LarryJane491/ComfyUI-ModelUnloader.git
+[submodule "custom_nodes/ComfyUI-Unique3D"]
+	path = custom_nodes/ComfyUI-Unique3D
+	url = https://github.com/jtydhr88/ComfyUI-Unique3D
