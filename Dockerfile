@@ -87,6 +87,9 @@ RUN pip install -r requirements.txt
 COPY custom_nodes/comfy-image-saver/requirements.txt .
 RUN pip install -r requirements.txt
 
+# COPY custom_nodes/ComfyUI-Unique3D/requirements.txt .
+# RUN pip install -r requirements.txt
+
 # COPY custom_nodes/ComfyUI-InstantMesh/requirements.txt .
 # RUN pip install -r requirements.txt
 
