@@ -58,3 +58,6 @@
 [submodule "custom_nodes/ComfyUI-ModelUnloader"]
 	path = custom_nodes/ComfyUI-ModelUnloader
 	url = https://github.com/LarryJane491/ComfyUI-ModelUnloader.git
+[submodule "custom_nodes/ComfyUI-DepthAnythingV2"]
+	path = custom_nodes/ComfyUI-DepthAnythingV2
+	url = https://github.com/kijai/ComfyUI-DepthAnythingV2.git
