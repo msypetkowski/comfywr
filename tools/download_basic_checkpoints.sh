@@ -12,10 +12,10 @@ cd downloaded_models
 
 pushd checkpoints/
 wget -nc https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaper_8_pruned.safetensors
-wget -nc https://huggingface.co/Yntec/mistoonAnime2/resolve/main/mistoonAnime_v20_vae.safetensors
-wget -nc https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaperXL_Turbo_dpmppSdeKarras_half_pruned_6.safetensors
-wget -nc https://huggingface.co/stabilityai/stable-zero123/resolve/main/stable_zero123.ckpt
-wget -nc https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors
+# wget -nc https://huggingface.co/Yntec/mistoonAnime2/resolve/main/mistoonAnime_v20_vae.safetensors
+# wget -nc https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaperXL_Turbo_dpmppSdeKarras_half_pruned_6.safetensors
+# wget -nc https://huggingface.co/stabilityai/stable-zero123/resolve/main/stable_zero123.ckpt
+# wget -nc https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors
 popd
 
 pushd controlnet/
