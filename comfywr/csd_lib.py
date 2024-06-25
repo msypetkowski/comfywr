@@ -141,6 +141,22 @@ def run_marigold_depth_estimation(image, **kwargs):
 
 
 @torch.no_grad()
+def load_depth_anything_v2():
+    from nodes import NODE_CLASS_MAPPINGS
+    cls = NODE_CLASS_MAPPINGS['DownloadAndLoadDepthAnythingV2Model']
+    ret, = cls().loadmodel('depth_anything_v2_vitl_fp32.safetensors')
+    return ret
+
+
+@torch.no_grad()
+def run_depth_anything_v2(image, ckpt):
+    from nodes import NODE_CLASS_MAPPINGS
+    cls = NODE_CLASS_MAPPINGS['DepthAnything_V2']
+    ret, = cls().process(ckpt, image)
+    return ret
+
+
+@torch.no_grad()
 def model_merge_simple(chkp1, chkp2, ratio):
     return ModelMergeSimple().merge(chkp1, chkp2, 1 - ratio)[0]
 
