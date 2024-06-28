@@ -61,3 +61,9 @@
 [submodule "custom_nodes/ComfyUI-DepthAnythingV2"]
 	path = custom_nodes/ComfyUI-DepthAnythingV2
 	url = https://github.com/kijai/ComfyUI-DepthAnythingV2.git
+[submodule "custom_nodes/ComfyUI-BRIA_AI-RMBG"]
+	path = custom_nodes/ComfyUI-BRIA_AI-RMBG
+	url = https://github.com/ZHO-ZHO-ZHO/ComfyUI-BRIA_AI-RMBG.git
+[submodule "custom_nodes/ComfyUI_Transparent-Background"]
+	path = custom_nodes/ComfyUI_Transparent-Background
+	url = https://github.com/maruhidd/ComfyUI_Transparent-Background.git
