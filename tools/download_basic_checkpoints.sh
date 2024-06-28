@@ -12,10 +12,11 @@ cd downloaded_models
 
 pushd checkpoints/
 wget -nc https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaper_8_pruned.safetensors
-wget -nc https://huggingface.co/Yntec/mistoonAnime2/resolve/main/mistoonAnime_v20_vae.safetensors
-wget -nc https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaperXL_Turbo_dpmppSdeKarras_half_pruned_6.safetensors
-wget -nc https://huggingface.co/stabilityai/stable-zero123/resolve/main/stable_zero123.ckpt
-wget -nc https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors
+# wget -nc https://huggingface.co/Yntec/mistoonAnime2/resolve/main/mistoonAnime_v20_vae.safetensors
+# wget -nc https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaperXL_Turbo_dpmppSdeKarras_half_pruned_6.safetensors
+# wget -nc https://huggingface.co/stabilityai/stable-zero123/resolve/main/stable_zero123.ckpt
+# wget -nc https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors
+wget -nc https://civitai.com/api/download/models/490254 -O ZavyChromaXL_v7.0.safetensors
 popd
 
 pushd controlnet/
@@ -48,11 +49,11 @@ wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-fa
 popd
 
 pushd vae/
-wget -nc https://huggingface.co/stabilityai/sd-vae-ft-mse-original/resolve/main/vae-ft-mse-840000-ema-pruned.safetensors
+# wget -nc https://huggingface.co/stabilityai/sd-vae-ft-mse-original/resolve/main/vae-ft-mse-840000-ema-pruned.safetensors
 popd
 
 pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/lgm/
-wget -nc https://huggingface.co/ashawkey/LGM/resolve/main/model_fp16.safetensors
+# wget -nc https://huggingface.co/ashawkey/LGM/resolve/main/model_fp16.safetensors
 popd
 
 pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/flamehaze1115/
@@ -60,20 +61,20 @@ pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/flamehaze1115/
 popd
 
 pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/ashawkey/imagedream-ipmv-diffusers/unet/
-wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/unet/diffusion_pytorch_model.safetensors
+# wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/unet/diffusion_pytorch_model.safetensors
 popd
 pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/ashawkey/imagedream-ipmv-diffusers/vae/
-wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/vae/diffusion_pytorch_model.safetensors
+# wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/vae/diffusion_pytorch_model.safetensors
 popd
 pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/ashawkey/imagedream-ipmv-diffusers/image_encoder/
-wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/image_encoder/model.safetensors
+# wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/image_encoder/model.safetensors
 popd
 pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/ashawkey/imagedream-ipmv-diffusers/text_encoder/
-wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/text_encoder/model.safetensors
+# wget -nc https://huggingface.co/ashawkey/imagedream-ipmv-diffusers/resolve/main/text_encoder/model.safetensors
 popd
 
 pushd ../custom_nodes/ComfyUI-AnimateDiff-Evolved/models/
-wget -nc https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_mm.ckpt
+# wget -nc https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_mm.ckpt
 popd
 
 pushd ipadapter/
@@ -91,7 +92,7 @@ popd
 
 
 pushd style_models/
-wget -nc https://huggingface.co/TencentARC/T2I-Adapter/resolve/main/models/coadapter-style-sd15v1.pth
+# wget -nc https://huggingface.co/TencentARC/T2I-Adapter/resolve/main/models/coadapter-style-sd15v1.pth
 popd
 
 pushd clip_vision/
@@ -105,7 +106,7 @@ popd
 
 mkdir ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
 pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
-wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/pixel-diffusion.pth
-wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/ccm-diffusion.pth
-wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/CRM.pth
+# wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/pixel-diffusion.pth
+# wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/ccm-diffusion.pth
+# wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/CRM.pth
 popd
