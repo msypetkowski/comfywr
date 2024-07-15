@@ -70,7 +70,7 @@ ENV FORCE_CUDA=1
 RUN pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 
 # RUN pip install torchmcubes
-RUN pip install git+https://github.com/tatsy/torchmcubes.git
+# RUN pip install git+https://github.com/tatsy/torchmcubes.git
 
 COPY custom_nodes/ComfyUI-KJNodes/requirements.txt .
 RUN pip install -r requirements.txt
