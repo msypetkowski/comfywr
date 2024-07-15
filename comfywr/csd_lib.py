@@ -14,7 +14,7 @@ from custom_nodes.comfyui_controlnet_aux.node_wrappers.midas import MIDAS_Normal
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.openpose import OpenPose_Preprocessor
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.scribble import Scribble_Preprocessor
 from custom_nodes.comfyui_marigold.nodes import MarigoldDepthEstimation
-from nodes import init_custom_nodes, ControlNetLoader, CheckpointLoaderSimple, EmptyLatentImage, \
+from nodes import init_extra_nodes, ControlNetLoader, CheckpointLoaderSimple, EmptyLatentImage, \
     CLIPTextEncode, LatentUpscale, LatentUpscaleBy, VAEDecode, VAEEncode, LoadImage, ImageScale, ImageScaleBy, \
     common_ksampler, CLIPSetLastLayer, LoraLoader, StyleModelLoader, CLIPVisionLoader, CLIPVisionEncode, \
     StyleModelApply
@@ -188,7 +188,7 @@ def load_upscale_model(path):
 
 @torch.no_grad()
 def load_checkpoints(paths):
-    init_custom_nodes()
+    init_extra_nodes()
     sd = load_sd_checkpoint(paths['sd'])
     ups = load_upscale_model(paths['upscale_model'])
     cn_depth = _load_cn_check(paths, 'cn_depth')
