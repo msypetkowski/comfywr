@@ -1,4 +1,5 @@
 ARG CUDA_VERSION=12.1.0-devel
+# ARG CUDA_VERSION=12.3.1-devel
 
 FROM --platform=amd64 docker.io/nvidia/cuda:${CUDA_VERSION}-ubuntu22.04
 
@@ -84,42 +85,38 @@ RUN pip install -r requirements.txt
 COPY custom_nodes/ComfyUI-KJNodes/requirements.txt .
 RUN pip install -r requirements.txt
 
+# other packages (not listed in requirements.txt files in some submodules, but needed)
+RUN pip install ultralytics==8.2.1
+RUN pip install numba numexpr
+
+# RUN pip install git+https://github.com/NVlabs/nvdiffrast
+# RUN pip install git+https://github.com/ashawkey/kiuikit.git
+# RUN git clone --recursive https://github.com/ashawkey/diff-gaussian-rasterization
+# RUN pip install --upgrade setuptools
+# ENV FORCE_CUDA=1
+# ENV TORCH_CUDA_ARCH_LIST="8.9"
+# ENV CUDA_PATH=/usr/local/cuda-12.3
+# RUN pip install ./diff-gaussian-rasterization
+# RUN pip install git+https://gitlab.inria.fr/bkerbl/simple-knn.git
+# RUN pip install "git+https://github.com/facebookresearch/pytorch3d.git"
+
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
 WORKDIR /workdir/ComfyUI/
 
-# RUN git clone --recursive https://github.com/ashawkey/diff-gaussian-rasterization
-# RUN pip install --upgrade setuptools
-# 
-# # RUN apt install nvcc -y
-# ENV CUDA_PATH=/usr/local/cuda-12.3
-# RUN pip install ./diff-gaussian-rasterization
-# # RUN pip install git+https://github.com/NVlabs/nvdiffrast
 # RUN pip install git+https://github.com/rusty1s/pytorch_scatter.git
 # 
 # 
-# RUN pip install numba numexpr
 # 
-# RUN pip install git+https://gitlab.inria.fr/bkerbl/simple-knn.git
 # 
 # # RUN pip install pytorch3d
 # # pip install --no-index --no-cache-dir pytorch3d
 # # RUN pip install pytorch3d
 # 
-# RUN pip install rembg
-# 
-# ENV FORCE_CUDA=1
-# 
-# 
-# 
-# # this is for the ultra upsccale node pack
-# RUN pip install ultralytics==8.2.1
 # 
 # 
 # 
 # # COPY custom_nodes/ComfyUI-Unique3D/requirements.txt .
 # # RUN pip install -r requirements.txt
-# COPY custom_nodes/ComfyUI-3D-Pack/requirements.txt .
-# RUN pip install -r requirements.txt
 # 
 # 
 # 
@@ -132,6 +129,3 @@ WORKDIR /workdir/ComfyUI/
 # # RUN apt-get install -y mesa-utils
 # 
 # # RUN pip install git+https://github.com/tatsy/torchmcubes.git
-# 
-# RUN pip install "git+https://github.com/facebookresearch/pytorch3d.git"
-# 
