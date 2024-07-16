@@ -6,14 +6,9 @@ docker run --gpus=all --rm --net=host \
   -e NVIDIA_DRIVER_CAPABILITIES=all \
   -v $(pwd):/workdir/ \
   -v $(pwd)/downloaded_models/:/workdir/ComfyUI/models/ \
-  -v $(pwd)/custom_nodes/ComfyUI-3D-Pack/:/workdir/ComfyUI/custom_nodes/ComfyUI-3D-Pack/ \
+  -v $(pwd)/custom_nodes/:/workdir/ComfyUI/custom_nodes/ \
   -e DISPLAY=$DISPLAY \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v /root/.u2net/:/root/.u2net/ \
   -it comfywr:latest \
-  bash
-  # -v $(pwd)/custom_nodes/:/workdir/ComfyUI/custom_nodes/ \
-  # bash -c "cd /workdir/ComfyUI/; python main.py"
-  # bash -c "cd /workdir/ComfyUI/; bash"
-  # --device=/dev/video0:/dev/video0 \
-  # --device=/dev/video1:/dev/video1 \
+  bash -c "cd /workdir/ComfyUI/; python main.py"

@@ -1,9 +1,6 @@
-ARG CUDA_VERSION=12.1.0-devel
-# ARG CUDA_VERSION=12.3.1-devel
+ARG CUDA_VERSION=12.1.1-devel
 
 FROM --platform=amd64 docker.io/nvidia/cuda:${CUDA_VERSION}-ubuntu22.04
-
-# FROM ghcr.io/selkies-project/nvidia-egl-desktop:latest
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
@@ -60,18 +57,31 @@ ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,graphics
 
 # Default pyopengl to EGL for good headless rendering support
 ENV PYOPENGL_PLATFORM egl
+RUN mkdir -p /usr/share/glvnd/egl_vendor.d && \
+    echo '{ \
+    "file_format_version" : "1.0.0", \
+    "ICD" : { \
+        "library_path" : "libEGL_nvidia.so.0" \
+    } \
+}' > /usr/share/glvnd/egl_vendor.d/10_nvidia.json
 
-# install and initialize conda
-# RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-#     chmod +x Miniconda3-latest-Linux-x86_64.sh && \
-#     ./Miniconda3-latest-Linux-x86_64.sh -b -p /workspace/miniconda3 && \
-#     rm Miniconda3-latest-Linux-x86_64.sh
-# ENV PATH="/workspace/miniconda3/bin:${PATH}"
-# RUN conda init bash
-# RUN conda create -n comfywr python=3.10 && echo "source activate comfywr" > ~/.bashrc
-# ENV PATH /workspace/miniconda3/envs/comfywr/bin:$PATH
-# RUN conda install Ninja
-# RUN conda install cuda -c nvidia/label/cuda-12.1.0 -y
+# other packs (simple dependencies)
+COPY custom_nodes/comfyui_controlnet_aux/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/comfyui_marigold/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI_essentials/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI-Impact-Pack/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI-Inspire-Pack/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/comfy-image-saver/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI_Transparent-Background/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI-KJNodes/requirements.txt .
+RUN pip install -r requirements.txt
 
 # Main repo dependencies
 COPY ComfyUI/requirements.txt .
@@ -84,10 +94,6 @@ RUN pip install ninja rembg[gpu] open_clip_torch
 WORKDIR /install_dir/
 COPY custom_nodes/ComfyUI-3D-Pack/ .
 RUN python install.py
-
-# RUN conda install -c conda-forge libstdcxx-ng libllvm15
-# RUN conda install --solver=classic conda-forge::conda-libmamba-solver conda-forge::libmamba conda-forge::libmambapy conda-forge::libarchive -y
-# RUN conda install -c conda-forge libstdcxx-ng libllvm15 -y
 
 
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
