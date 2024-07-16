@@ -65,24 +65,6 @@ RUN mkdir -p /usr/share/glvnd/egl_vendor.d && \
     } \
 }' > /usr/share/glvnd/egl_vendor.d/10_nvidia.json
 
-# other packs (simple dependencies)
-COPY custom_nodes/comfyui_controlnet_aux/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/comfyui_marigold/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/ComfyUI_essentials/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/ComfyUI-Impact-Pack/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/ComfyUI-Inspire-Pack/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/comfy-image-saver/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/ComfyUI_Transparent-Background/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/ComfyUI-KJNodes/requirements.txt .
-RUN pip install -r requirements.txt
-
 # Main repo dependencies
 COPY ComfyUI/requirements.txt .
 RUN pip install -r requirements.txt
@@ -95,6 +77,29 @@ WORKDIR /install_dir/
 COPY custom_nodes/ComfyUI-3D-Pack/ .
 RUN python install.py
 
+# other packs (simple dependencies)
+COPY custom_nodes/comfyui_controlnet_aux/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/comfyui_marigold/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI_essentials/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI-Inspire-Pack/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/comfy-image-saver/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI_Transparent-Background/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI-KJNodes/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI_FizzNodes/requirements.txt .
+RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI-Impact-Pack/requirements.txt .
+RUN pip install -r requirements.txt
+
+# other packages (not listed in requirements.txt files in some submodules, but needed)
+RUN pip install ultralytics==8.2.1
+RUN pip install numba numexpr
 
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
 WORKDIR /workdir/ComfyUI/
