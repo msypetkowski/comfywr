@@ -103,5 +103,9 @@ RUN pip install -r requirements.txt
 RUN pip install ultralytics==8.2.1
 RUN pip install numba numexpr
 
+# other comfywr-specific requirements
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
 WORKDIR /workdir/ComfyUI/
