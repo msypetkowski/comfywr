@@ -74,7 +74,9 @@ COPY custom_nodes/ComfyUI-3D-Pack/requirements.txt .
 RUN pip install -r requirements.txt
 RUN pip install ninja rembg[gpu] open_clip_torch
 WORKDIR /install_dir/
-COPY custom_nodes/ComfyUI-3D-Pack/ .
+COPY custom_nodes/ComfyUI-3D-Pack/install.py .
+COPY custom_nodes/ComfyUI-3D-Pack/_Pre_Builds/ ./_Pre_Builds
+COPY custom_nodes/ComfyUI-3D-Pack/shared_utils/ ./shared_utils
 RUN python install.py
 
 # other packs (simple dependencies)
@@ -103,4 +105,3 @@ RUN pip install numba numexpr
 
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
 WORKDIR /workdir/ComfyUI/
-

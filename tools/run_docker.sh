@@ -11,4 +11,5 @@ docker run --gpus=all --rm --net=host \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v /root/.u2net/:/root/.u2net/ \
   -it comfywr:latest \
-  bash -c "cd /workdir/ComfyUI/; python main.py"
+  bash
+  # bash -c "cd /workdir/ComfyUI/; python main.py"
