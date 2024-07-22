@@ -67,3 +67,6 @@
 [submodule "custom_nodes/ComfyUI_Transparent-Background"]
 	path = custom_nodes/ComfyUI_Transparent-Background
 	url = https://github.com/maruhidd/ComfyUI_Transparent-Background.git
+[submodule "custom_nodes/ComfyUI_Dave_CustomNode"]
+	path = custom_nodes/ComfyUI_Dave_CustomNode
+	url = https://github.com/Davemane42/ComfyUI_Dave_CustomNode.git

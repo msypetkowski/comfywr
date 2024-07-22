@@ -14,7 +14,7 @@ from custom_nodes.comfyui_controlnet_aux.node_wrappers.midas import MIDAS_Normal
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.openpose import OpenPose_Preprocessor
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.scribble import Scribble_Preprocessor
 from custom_nodes.comfyui_marigold.nodes import MarigoldDepthEstimation
-from nodes import init_custom_nodes, ControlNetLoader, CheckpointLoaderSimple, EmptyLatentImage, \
+from nodes import init_extra_nodes, ControlNetLoader, CheckpointLoaderSimple, EmptyLatentImage, \
     CLIPTextEncode, LatentUpscale, LatentUpscaleBy, VAEDecode, VAEEncode, LoadImage, ImageScale, ImageScaleBy, \
     common_ksampler, CLIPSetLastLayer, LoraLoader, StyleModelLoader, CLIPVisionLoader, CLIPVisionEncode, \
     StyleModelApply
@@ -123,11 +123,6 @@ def cn_preprocess(imgs, preprocess_alg, **kwargs):
 
 @torch.no_grad()
 def run_marigold_depth_estimation(image, **kwargs):
-    inference_scale = kwargs['inference_scale']
-    if inference_scale != 1.0:
-        _, h, w, _ = image.shape
-        image = image_scale_by(image, inference_scale)
-    kwargs.pop('inference_scale')
     kw = dict(image=image, seed=42, denoise_steps=10, n_repeat=10,
               regularizer_strength=0.02,
               reduction_method='median', max_iter=5, tol=1e-3, invert=True,
@@ -135,8 +130,6 @@ def run_marigold_depth_estimation(image, **kwargs):
               scheduler='DDIMScheduler', normalize=True)
     kw.update(**kwargs)
     ret, = MarigoldDepthEstimation().process(**kw)
-    if inference_scale != 1.0:
-        ret = image_scale(ret, w, h)
     return ret
 
 
@@ -195,7 +188,7 @@ def load_upscale_model(path):
 
 @torch.no_grad()
 def load_checkpoints(paths):
-    init_custom_nodes()
+    init_extra_nodes()
     sd = load_sd_checkpoint(paths['sd'])
     ups = load_upscale_model(paths['upscale_model'])
     cn_depth = _load_cn_check(paths, 'cn_depth')
