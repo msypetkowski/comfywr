@@ -98,6 +98,8 @@ COPY custom_nodes/ComfyUI_FizzNodes/requirements.txt .
 RUN pip install -r requirements.txt
 COPY custom_nodes/ComfyUI-Impact-Pack/requirements.txt .
 RUN pip install -r requirements.txt
+COPY custom_nodes/eden_comfy_pipelines/requirements.txt .
+RUN pip install -r requirements.txt
 
 # other packages (not listed in requirements.txt files in some submodules, but needed)
 RUN pip install ultralytics==8.2.1
@@ -106,6 +108,10 @@ RUN pip install numba numexpr
 # other comfywr-specific requirements
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+
+# for PIL text rendering
+RUN wget https://github.com/JotJunior/PHP-Boleto-ZF2/raw/master/public/assets/fonts/arial.ttf
+RUN mv arial.ttf /usr/share/fonts/
 
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
 WORKDIR /workdir/ComfyUI/
