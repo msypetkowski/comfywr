@@ -52,6 +52,7 @@ popd
 
 pushd vae/
 # wget -nc https://huggingface.co/stabilityai/sd-vae-ft-mse-original/resolve/main/vae-ft-mse-840000-ema-pruned.safetensors
+wget -nc https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors
 popd
 
 pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/lgm/
