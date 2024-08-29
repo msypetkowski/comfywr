@@ -73,3 +73,9 @@
 [submodule "custom_nodes/eden_comfy_pipelines"]
 	path = custom_nodes/eden_comfy_pipelines
 	url = https://github.com/edenartlab/eden_comfy_pipelines.git
+[submodule "custom_nodes/--force"]
+	path = custom_nodes/--force
+	url = https://github.com/jags111/efficiency-nodes-comfyui.git
+[submodule "custom_nodes/efficiency-nodes-comfyui"]
+	path = custom_nodes/efficiency-nodes-comfyui
+	url = https://github.com/jags111/efficiency-nodes-comfyui.git

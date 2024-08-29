@@ -27,3 +27,4 @@ do_one main ComfyUI_Transparent-Background/
 do_one main ComfyUI-BRIA_AI-RMBG/
 do_one main ComfyUI_Dave_CustomNode/
 do_one main eden_comfy_pipelines/
+do_one main efficiency-nodes-comfyui//
