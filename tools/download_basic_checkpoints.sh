@@ -48,6 +48,8 @@ wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-fa
 wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sdxl_lora.safetensors
 wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sdxl_lora.safetensors
 wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sdxl_lora.safetensors
+
+wget -nc https://civitai.com/api/download/models/501823?type=Model&format=SafeTensor
 popd
 
 pushd vae/
