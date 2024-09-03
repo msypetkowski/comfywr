@@ -65,10 +65,6 @@ RUN mkdir -p /usr/share/glvnd/egl_vendor.d && \
     } \
 }' > /usr/share/glvnd/egl_vendor.d/10_nvidia.json
 
-# Main repo dependencies
-COPY ComfyUI/requirements.txt .
-RUN pip install -r requirements.txt
-
 # 3D pack (complex dependencies)
 COPY custom_nodes/ComfyUI-3D-Pack/requirements.txt .
 RUN pip install -r requirements.txt
@@ -78,6 +74,10 @@ COPY custom_nodes/ComfyUI-3D-Pack/install.py .
 COPY custom_nodes/ComfyUI-3D-Pack/_Pre_Builds/ ./_Pre_Builds
 COPY custom_nodes/ComfyUI-3D-Pack/shared_utils/ ./shared_utils
 RUN python install.py
+
+# Main repo dependencies
+COPY ComfyUI/requirements.txt .
+RUN pip install -r requirements.txt
 
 # other packs (simple dependencies)
 COPY custom_nodes/comfyui_controlnet_aux/requirements.txt .
