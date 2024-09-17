@@ -6,8 +6,8 @@ docker run --gpus=all --rm --net=host \
   -e NVIDIA_DRIVER_CAPABILITIES=all \
   -v $(pwd):/workdir/ \
   -v $(pwd)/downloaded_models/:/workdir/ComfyUI/models/ \
-  -v $(pwd)/custom_nodes/:/workdir/ComfyUI/custom_nodes/ \
   -e DISPLAY=$DISPLAY \
+  -v $(pwd)/custom_nodes/:/workdir/ComfyUI/custom_nodes/ \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v /root/.u2net/:/root/.u2net/ \
   -it comfywr:latest \
