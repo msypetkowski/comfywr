@@ -1,9 +1,1 @@
-pillow==10.4.0
-mmengine==0.10.4
-opencv-python==4.10.0.84
-insightface==0.7.3
-pandas==2.2.2
-seaborn==0.13.2
-xformers==0.0.26.post1
-timm==1.0.7
-jupyterlab==4.2.3
+jupyterlab==4.2.5
