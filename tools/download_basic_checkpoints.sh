@@ -6,7 +6,6 @@ mkdir -p downloaded_models/loras/
 mkdir -p downloaded_models/vae/
 mkdir -p downloaded_models/lgm/
 mkdir -p downloaded_models/ipadapter/
-mkdir -p downloaded_models/style_models/
 mkdir -p downloaded_models/clip_vision/
 cd downloaded_models
 
@@ -96,10 +95,6 @@ wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapt
 popd
 
 
-pushd style_models/
-# wget -nc https://huggingface.co/TencentARC/T2I-Adapter/resolve/main/models/coadapter-style-sd15v1.pth
-popd
-
 pushd clip_vision/
 wget -nc https://huggingface.co/openai/clip-vit-large-patch14/resolve/main/pytorch_model.bin -O clip-vit-large-patch14.bin
 
@@ -109,9 +104,9 @@ wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/image_en
     -O CLIP-ViT-bigG-14-laion2B-39B-b160k.safetensors
 popd
 
-mkdir ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
-pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
+# mkdir ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
+# pushd ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
 # wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/pixel-diffusion.pth
 # wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/ccm-diffusion.pth
 # wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/CRM.pth
-popd
+# popd

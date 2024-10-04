@@ -76,3 +76,6 @@
 [submodule "custom_nodes/efficiency-nodes-comfyui"]
 	path = custom_nodes/efficiency-nodes-comfyui
 	url = https://github.com/jags111/efficiency-nodes-comfyui.git
+[submodule "diffusers"]
+	path = diffusers
+	url = https://github.com/huggingface/diffusers.git
