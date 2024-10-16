@@ -3,7 +3,7 @@
 BASE_IMAGE="comfywr_intermediate:latest"
 TARGET_IMAGE="comfywr:latest"
 
-docker build -t $BASE_IMAGE -f docker/comfywr/Dockerfile . --progress=plain
+docker build -t $BASE_IMAGE -f docker/comfywr/Dockerfile .
 
 CONTAINER_NAME=tmp_comfywr_name
 docker run --gpus all --name $CONTAINER_NAME -it $BASE_IMAGE /bin/bash -c "python install.py"
