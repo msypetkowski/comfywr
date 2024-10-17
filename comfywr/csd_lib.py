@@ -4,6 +4,7 @@ import torch
 from comfy_extras.nodes_clip_sdxl import CLIPTextEncodeSDXL
 from comfy_extras.nodes_model_merging import ModelMergeSimple, CLIPMergeSimple
 from comfy_extras.nodes_upscale_model import ImageUpscaleWithModel, UpscaleModelLoader
+from comfy_extras.nodes_flux import CLIPTextEncodeFlux
 from custom_nodes.ComfyUI_IPAdapter_plus.IPAdapterPlus import IPAdapterModelLoader, IPAdapterAdvanced
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.canny import Canny_Edge_Preprocessor
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.leres import LERES_Depth_Map_Preprocessor
@@ -14,10 +15,11 @@ from custom_nodes.comfyui_controlnet_aux.node_wrappers.midas import MIDAS_Normal
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.openpose import OpenPose_Preprocessor
 from custom_nodes.comfyui_controlnet_aux.node_wrappers.scribble import Scribble_Preprocessor
 from custom_nodes.comfyui_marigold.nodes import MarigoldDepthEstimation
+from custom_nodes.x_flux_comfyui.nodes import XlabsSampler, LoadFluxControlNet, LoadFluxIPAdapter, ApplyAdvancedFluxControlNet, ApplyAdvancedFluxIPAdapter
 from nodes import init_extra_nodes, ControlNetLoader, CheckpointLoaderSimple, EmptyLatentImage, \
     CLIPTextEncode, LatentUpscale, LatentUpscaleBy, VAEDecode, VAEEncode, LoadImage, ImageScale, ImageScaleBy, \
     common_ksampler, CLIPSetLastLayer, LoraLoader, StyleModelLoader, CLIPVisionLoader, CLIPVisionEncode, \
-    StyleModelApply
+    StyleModelApply, DualCLIPLoader, UNETLoader, VAELoader
 
 
 @torch.no_grad()
@@ -76,6 +78,17 @@ def clip_vision_encode(clip_vision, img):
 @torch.no_grad()
 def apply_style_model(clip_vision_output, style_model, conditioning):
     return StyleModelApply().apply_stylemodel(clip_vision_output, style_model, conditioning)[0]
+
+
+@torch.no_grad()
+def apply_flux_control_net(controlnet, image, controlnet_condition, start_percent=0., end_percent=1., strength=0.6):
+    return ApplyAdvancedFluxControlNet().prepare(controlnet[0], image, strength,
+                                                  start_percent, end_percent, controlnet_condition)
+
+
+@torch.no_grad()
+def ip_adapter_apply_flux(model, ipadapter, image, begin_strength, end_strength, smoothing_type='Linear'):
+    return ApplyAdvancedFluxIPAdapter().applymodel(model, ipadapter[0], image, begin_strength, end_strength, smoothing_type)
 
 
 @torch.no_grad()
@@ -176,6 +189,24 @@ def _load_cn_check(paths, path_key):
 
 
 @torch.no_grad()
+def load_flux_checkpoint(chkp_flux, chkp_clip_l, chkp_t5xxl, chkp_vae, flux_dtype='fp8e5m2'):
+    sd = UNETLoader().load_unet(chkp_flux, weight_dtype=flux_dtype)[0]
+    clip = DualCLIPLoader().load_clip(chkp_clip_l, chkp_t5xxl, type='flux')[0]
+    vae = VAELoader().load_vae(chkp_vae)[0]
+    return dict(sd=sd, clip=clip, vae=vae)
+
+
+@torch.no_grad()
+def load_flux_cn(controlnet_path, flux_name='flux-dev'):
+    return LoadFluxControlNet().loadmodel(flux_name, controlnet_path)
+
+
+@torch.no_grad()
+def load_flux_ipadapter(ipadapter_path, clip_vision_path, provider='GPU'):
+    return LoadFluxIPAdapter().loadmodel(ipadapter_path, clip_vision_path, provider)
+
+
+@torch.no_grad()
 def load_sd_checkpoint(path):
     chkp = CheckpointLoaderSimple().load_checkpoint(path)
     return dict(sd=chkp[0], clip=chkp[1], vae=chkp[2])
@@ -239,9 +270,23 @@ def clip_encode_sdxl(clip, width, height, crop_w, crop_h,
 
 
 @torch.no_grad()
+def clip_encode_flux(clip, text_clip_l, text_t5xxl, guidance):
+    return CLIPTextEncodeFlux().encode(clip, text_clip_l, text_t5xxl, guidance)[0]
+
+
+@torch.no_grad()
 def clip_set_last_layer(clip_chkp, last_layer=-1):
     ret, = CLIPSetLastLayer().set_last_layer(clip_chkp, last_layer)
     return ret
+
+
+@torch.no_grad()
+def sample_flux(model, positive, negative, seed=7, steps=20, timestep_to_start_cfg=0, true_gs=4.0,
+                 image_to_image_strength=0.0, denoise_strength=1.0, latent_image=None, cn=None, **kwargs):
+    latents = XlabsSampler().sampling(model, positive, negative, seed, steps,
+                                      timestep_to_start_cfg, true_gs, image_to_image_strength,
+                                      denoise_strength, latent_image, cn)
+    return latents[0]
 
 
 @torch.no_grad()

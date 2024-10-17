@@ -88,6 +88,8 @@ COPY custom_nodes/ComfyUI_FizzNodes/requirements.txt .
 RUN pip install -r requirements.txt
 COPY custom_nodes/ComfyUI-Impact-Pack/requirements.txt .
 RUN pip install -r requirements.txt
+COPY custom_nodes/x_flux_comfyui/requirements.txt .
+RUN pip install -r requirements.txt
 COPY custom_nodes/eden_comfy_pipelines/requirements.txt .
 RUN pip install -r requirements.txt
 COPY custom_nodes/efficiency-nodes-comfyui/requirements.txt .

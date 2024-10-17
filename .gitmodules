@@ -79,3 +79,6 @@
 [submodule "diffusers"]
 	path = diffusers
 	url = https://github.com/huggingface/diffusers.git
+[submodule "custom_nodes/x_flux_comfyui"]
+	path = custom_nodes/x_flux_comfyui
+	url = https://github.com/XLabs-AI/x-flux-comfyui.git
