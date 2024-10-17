@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 
-from .csd_lib import create_empty_latent, clip_encode, clip_encode_sdxl, sample, upscale_latent_by, vae_decode, \
+from .csd_lib import create_empty_latent, clip_encode, clip_encode_flux, clip_encode_sdxl, sample, upscale_latent_by, vae_decode, \
     load_image, vae_encode, image_upscale_w_model, image_scale, clip_set_last_layer, cn_preprocess, \
-    control_net_set_apply_hint, control_net_set_create, ip_adapter_apply
+    control_net_set_apply_hint, control_net_set_create, ip_adapter_apply, ip_adapter_apply_flux, sample_flux
 from .my_lib import batch_conditions, interpolate_conditions, put_text
 
 
@@ -149,29 +149,44 @@ def hq_infer_txt(checkpoints, initial_w=16 * 64, initial_h=9 * 64, batch_size=1,
                  pos_txt='high quality photo', neg_txt='embedding:EasyNegative.safetensors',
                  sampler_settings=None, upscale_by=1.5, initial_denoise=1.0, upscaled_denoise=0.75,
                  use_upscaler=False, return_first_stage=False, clip_skip=None,
-                 no_upscale=False, initial_image=None, sampler_settings_stage2=None, style_entries=None, sdxl=False):
+                 no_upscale=False, initial_image=None, sampler_settings_stage2=None, style_entries=None,
+                 sd_version='sd1.5'):
     chkp = checkpoints['clip']
-    if clip_skip:
+    if clip_skip and sd_version in ['sd1.5', 'sdxl']:
         chkp = clip_set_last_layer(chkp, -clip_skip)
-    if not sdxl:
+    if sd_version == 'sd1.5':
         condition = clip_encode(chkp, pos_txt)
         neg_condition = clip_encode(checkpoints['clip'], neg_txt)
-    else:
+    elif sd_version == 'sdxl':
         # def clip_encode_sdxl(clip, width, height, crop_w, crop_h,
         #                      target_width, target_height, text_g, text_l):
         cw, ch = round(initial_w * upscale_by), round(initial_h * upscale_by)
         condition = clip_encode_sdxl(chkp, cw, ch, 0, 0, cw, ch, pos_txt, pos_txt)
-        neg_condition = clip_encode_sdxl(checkpoints['clip'], cw, ch, 0, 0, cw, ch, neg_txt, neg_txt)
+        neg_condition = clip_encode_sdxl(checkpoints['clip'], cw, ch, 0, 0, cw, ch, neg_txt, neg_txt)  
+    elif sd_version == 'flux1dev':
+        if pos_txt.count('||') == 1:
+            pos_txt_clipl, pos_txt_t5xxl = pos_txt.split('||')
+        else:
+            pos_txt_clipl = pos_txt_t5xxl = pos_txt
+        if neg_txt.count('||') == 1:
+            neg_txt_clipl, neg_txt_t5xxl = neg_txt.split('||')
+        else:
+            neg_txt_clipl = neg_txt_t5xxl = neg_txt
+        condition = clip_encode_flux(chkp, pos_txt_clipl, pos_txt_t5xxl, sampler_settings.flux_guidance)
+        neg_condition = clip_encode_flux(chkp, neg_txt_clipl, neg_txt_t5xxl, sampler_settings.flux_guidance)
+    else:
+        raise NotImplementedError(f'Unknown sd_version: {sd_version}')
+        
     return hq_infer(checkpoints, initial_w, initial_h, batch_size, condition, neg_condition,
                     sampler_settings, upscale_by, initial_denoise, upscaled_denoise, use_upscaler, return_first_stage,
-                    no_upscale, initial_image, sampler_settings_stage2, style_entries)
+                    no_upscale, initial_image, sampler_settings_stage2, style_entries, sd_version)
 
 
 @torch.no_grad()
 def hq_infer(checkpoints, initial_w, initial_h, batch_size, conditions, neg_conditions,
              sampler_settings, upscale_by=1.5, initial_denoise=1.0, upscaled_denoise=0.75,
              use_upscaler=False, return_first_stage=False, no_upscale=False,
-             initial_image=None, sampler_settings_stage2=None, style_entries=None):
+             initial_image=None, sampler_settings_stage2=None, style_entries=None, sd_version='sd1.5'):
     if style_entries is None:
         style_entries = []
     if sampler_settings_stage2 is None:
@@ -188,14 +203,24 @@ def hq_infer(checkpoints, initial_w, initial_h, batch_size, conditions, neg_cond
 
     sd_chkp = checkpoints['sd']
     for style_entry in style_entries:
-        sd_chkp = ip_adapter_apply(ipadapter=checkpoints['ipadapter'],
-                                   model=sd_chkp,
-                                   clip_vision=checkpoints['clip_vision'],
-                                   image=load_image(style_entry['img_path'])[0],
-                                   **style_entry['ipadapter_apply_kwargs'])
+        if sd_version in ['sd1.5', 'sdxl']:
+            sd_chkp = ip_adapter_apply(ipadapter=checkpoints['ipadapter'],
+                                    model=sd_chkp,
+                                    clip_vision=checkpoints['clip_vision'],
+                                    image=load_image(style_entry['img_path'])[0],
+                                    **style_entry['ipadapter_apply_kwargs'])
+        elif sd_version == 'flux1dev':
+            sd_chkp = ip_adapter_apply_flux(model=sd_chkp,
+                                            ipadapter=checkpoints['ipadapter'],
+                                            image=load_image(style_entry['img_path'])[0],
+                                            **style_entry['ipadapter_apply_kwargs_flux'])[0]
 
-    small_latents = sample(sd_chkp, positive=conditions, negative=neg_conditions,
-                           latent_image=latent, denoise=initial_denoise, **sampler_settings)
+    if sd_version in ['sd1.5', 'sdxl']:
+        small_latents = sample(sd_chkp, positive=conditions, negative=neg_conditions,
+                            latent_image=latent, denoise=initial_denoise, **sampler_settings)
+    elif sd_version == 'flux1dev':
+        small_latents = sample_flux(sd_chkp, positive=conditions, negative=neg_conditions,
+                            latent_image=latent, **sampler_settings)
     if no_upscale:
         small_img = vae_decode(checkpoints['vae'], small_latents)
         large_img = small_img
