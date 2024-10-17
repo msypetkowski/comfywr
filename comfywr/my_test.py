@@ -172,8 +172,8 @@ def hq_infer_txt(checkpoints, initial_w=16 * 64, initial_h=9 * 64, batch_size=1,
             neg_txt_clipl, neg_txt_t5xxl = neg_txt.split('||')
         else:
             neg_txt_clipl = neg_txt_t5xxl = neg_txt
-        condition = clip_encode_flux(chkp, pos_txt_clipl, pos_txt_t5xxl, sampler_settings.flux_guidance)
-        neg_condition = clip_encode_flux(chkp, neg_txt_clipl, neg_txt_t5xxl, sampler_settings.flux_guidance)
+        condition = clip_encode_flux(chkp, pos_txt_clipl, pos_txt_t5xxl, sampler_settings['flux_guidance'])
+        neg_condition = clip_encode_flux(chkp, neg_txt_clipl, neg_txt_t5xxl, sampler_settings['flux_guidance'])
     else:
         raise NotImplementedError(f'Unknown sd_version: {sd_version}')
         
