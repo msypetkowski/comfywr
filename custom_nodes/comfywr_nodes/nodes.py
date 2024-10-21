@@ -246,8 +246,8 @@ class AlignMeshToMasks:
         original_mesh_silh = mesh_silhouette_images(mesh)
 
         target_silh = [
-            masks[0].cpu().numpy().astype(np.uint8) * 255,
-            masks[1].cpu().numpy().astype(np.uint8) * 255,
+            masks[0].cpu().numpy().astype(np.uint8)[:, :, 0] * 255,
+            masks[1].cpu().numpy().astype(np.uint8)[:, :, 0] * 255,
         ]
         for i in range(2):
             target_silh[i] = cv2.resize(target_silh[i], (1024, 1024)) > 0
@@ -267,9 +267,10 @@ class AlignMeshToMasks:
         offset_z = params2.x[1]
 
         # aligned_mesh = transform_mesh(aligned_mesh, offset_x, offset_y, offset_z, *[scale] * 3)
-        aligned_mesh = transform_mesh(mesh, 0, 0, 0, *[scale] * 3)
+        # aligned_mesh = transform_mesh(mesh, 0, 0, 0, *[scale] * 3)
+        aligned_mesh = mesh
         # aligned_mesh_slih = mesh_silhouette_images(aligned_mesh)
-        aligned_mesh.save(output_mesh_file_path)
+        aligned_mesh.export(output_mesh_file_path)
 
         return (output_mesh_file_path,)
 
