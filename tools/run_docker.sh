@@ -8,7 +8,7 @@ docker run --gpus=all --rm --net=host \
   -v $(pwd)/downloaded_models/:/workdir/ComfyUI/models/ \
   -e DISPLAY=$DISPLAY \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
-  -v /root/.u2net/:/root/.u2net/ \
+  -v $(pwd)/comfywr_cache/:/root/ \
   -v $(pwd)/custom_nodes/:/workdir/ComfyUI/custom_nodes/ \
   -it comfywr:latest \
   bash -c "cd /workdir/ComfyUI/; python main.py"
