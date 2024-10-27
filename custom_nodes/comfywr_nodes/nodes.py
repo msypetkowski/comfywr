@@ -1,9 +1,14 @@
+import os
+
+import cv2
 import numpy as np
 import torch
-import cv2
+import trimesh
 from PIL import Image, ImageDraw, ImageFont
 from scipy.optimize import differential_evolution
 from skimage.metrics import mean_squared_error
+
+import folder_paths as comfy_paths
 
 
 def put_text(img, text, coords, text_color, font_size):
@@ -112,6 +117,7 @@ def alignment_objective_function(params, source_img, target_img, padding_color):
 
     return mse
 
+
 def align_images(source_img, target_img):
     """
     Uses differential evolution to find the affine transformation (scaling and translation)
@@ -120,7 +126,7 @@ def align_images(source_img, target_img):
     """
 
     # assume the first column of pixels defines padding/background color
-    padding_color = np.median(target_img[:, 0, :], axis=0)
+    padding_color = np.median(target_img[:, 0], axis=0)
 
     # Initially rescale source image for optimization
     ratio = source_img.shape[0] / target_img.shape[1]
@@ -132,12 +138,11 @@ def align_images(source_img, target_img):
 
     # Set bounds for the affine transformation parameters
     bounds = [
-        (0.5, 2.0),    # s (scaling in x and y)
-        (-0.5, 0.5),   # t_x (translation in x)
-        (-0.5, 0.5),   # t_y (translation in y)
+        (0.5, 2.0),  # s (scaling in x and y)
+        (-0.5, 0.5),  # t_x (translation in x)
+        (-0.5, 0.5),  # t_y (translation in y)
     ]
 
-    print([1.0, (w_target - w_source) / 2, 0])
     # Perform the optimization
     result = differential_evolution(
         alignment_objective_function,
@@ -205,3 +210,170 @@ class ImageAligner:
             assert result[-1].shape == trgt.shape
 
         return (torch.tensor(np.stack(result).astype(np.float32)).to(target.device),)
+
+
+class AlignMeshToMasks:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "input_mesh_file_path": ("STRING", {"default": '', "multiline": False}),
+                "output_mesh_file_path": ("STRING", {"default": '', "multiline": False}),
+                "masks": ("IMAGE",),
+            },
+        }
+
+    RETURN_TYPES = (
+        "STRING",
+    )
+    RETURN_NAMES = (
+        "output_mesh_file_path",
+    )
+    FUNCTION = "align_mesh"
+    CATEGORY = "comfywr_nodes"
+
+    def align_mesh(self, input_mesh_file_path, output_mesh_file_path, masks):
+        if not os.path.isabs(input_mesh_file_path):
+            input_mesh_file_path = os.path.join(comfy_paths.input_directory, input_mesh_file_path)
+        if not os.path.isabs(output_mesh_file_path):
+            output_mesh_file_path = os.path.join(comfy_paths.output_directory, output_mesh_file_path)
+
+        if os.path.exists(input_mesh_file_path):
+            mesh = trimesh.load(input_mesh_file_path)
+        else:
+            print(f"[{self.__class__.__name__}] File {input_mesh_file_path} does not exist")
+
+        original_mesh_silh = mesh_silhouette_images(mesh)
+
+        target_silh = [
+            masks[0].cpu().numpy().astype(np.uint8)[:, :, 0] * 255,
+            masks[1].cpu().numpy().astype(np.uint8)[:, :, 0] * 255,
+        ]
+        for i in range(2):
+            target_silh[i] = cv2.resize(target_silh[i], (1024, 1024)) > 0
+
+        aligned1, params1 = align_images(original_mesh_silh[0].astype(np.uint8) * 255,
+                                         target_silh[0].astype(np.uint8) * 255)
+        aligned2, params2 = align_images(original_mesh_silh[1].astype(np.uint8) * 255,
+                                         target_silh[1].astype(np.uint8) * 255)
+        print('Params:', params1.x, params2.x)
+        # aligned_silh = [aligned1 > 0, aligned2 > 0]
+
+        # scale = (params1.x[0] + params2.x[0]) / 2
+        scale = params1.x[0]
+        offset_x = params1.x[1]
+        # offset_y = (params1.x[2] + params2.x[2]) / 2
+        offset_y = params1.x[2]
+        offset_z = params2.x[1]
+
+        # aligned_mesh = transform_mesh(aligned_mesh, offset_x, offset_y, offset_z, *[scale] * 3)
+        # aligned_mesh = transform_mesh(mesh, 0, 0, 0, *[scale] * 3)
+        aligned_mesh = mesh
+        # aligned_mesh_slih = mesh_silhouette_images(aligned_mesh)
+        aligned_mesh.export(output_mesh_file_path)
+
+        return (output_mesh_file_path,)
+
+
+def mesh_silhouette_images(mesh):
+    """
+    WARNING: AI generated
+
+    Generates three silhouette images of a 3D mesh projected onto the XY, YZ, and XZ planes.
+
+    Parameters:
+    mesh (trimesh.Trimesh): The input mesh, assumed to be within bounds [-1, 1] along each axis.
+
+    Returns:
+    tuple: Three 1024x1024 binary numpy arrays representing the silhouettes on the XY, YZ, and XZ planes.
+    """
+    # Get vertices and faces from the mesh
+    vertices = mesh.vertices  # shape (n_vertices, 3)
+    faces = mesh.faces  # shape (n_faces, 3)
+    triangles = vertices[faces]  # shape (n_faces, 3, 3)
+
+    # Prepare images and drawing contexts for each projection
+    img_xy = Image.new('1', (1024, 1024), 0)
+    draw_xy = ImageDraw.Draw(img_xy)
+
+    img_yz = Image.new('1', (1024, 1024), 0)
+    draw_yz = ImageDraw.Draw(img_yz)
+
+    # img_xz = Image.new('1', (1024, 1024), 0)
+    # draw_xz = ImageDraw.Draw(img_xz)
+
+    # Mapping functions from coordinate space [-1, 1] to pixel space [0, 1023]
+    def coord_to_pixel(coord):
+        return ((coord + 1.0) * 511.5).round().astype(int)
+
+    def coord_to_pixel_flipped(coord):
+        return ((1.0 - coord) * 511.5).round().astype(int)
+
+    # Loop over each triangle to project and draw on the images
+    for tri in triangles:
+        # XY projection (view along +Z direction)
+        x = tri[:, 0]
+        y = tri[:, 1]
+        px = coord_to_pixel(x)
+        py = coord_to_pixel_flipped(y)
+        points = list(zip(px, py))
+        draw_xy.polygon(points, fill=1)
+
+        # YZ projection (view along +X direction)
+        y = tri[:, 1]
+        z = tri[:, 2]
+        px = coord_to_pixel(z)
+        py = coord_to_pixel_flipped(y)
+        points = list(zip(px, py))
+        draw_yz.polygon(points, fill=1)
+
+        # XZ projection (view along +Y direction)
+        # x = tri[:, 0]
+        # z = tri[:, 2]
+        # px = coord_to_pixel(x)
+        # py = coord_to_pixel_flipped(z)
+        # points = list(zip(px, py))
+        # draw_xz.polygon(points, fill=1)
+
+    # Convert images to numpy arrays and return
+    img_xy_array = np.array(img_xy)
+    img_yz_array = np.array(img_yz)
+    # img_xz_array = np.array(img_xz)
+
+    return img_xy_array, img_yz_array
+
+
+def transform_mesh(mesh, x_offset, y_offset, z_offset, x_scale, y_scale, z_scale):
+    """
+    WARNING: AI generated
+
+    Apply scaling and translation to a mesh.
+
+    Parameters:
+    - mesh: trimesh.Trimesh object
+    - x_offset, y_offset, z_offset: translation offsets along x, y, z axes
+    - x_scale, y_scale, z_scale: scaling factors along x, y, z axes
+
+    Returns:
+    - transformed_mesh: the transformed trimesh.Trimesh object
+    """
+    # Create a scaling matrix
+    scale_matrix = np.eye(4)
+    scale_matrix[0, 0] = x_scale
+    scale_matrix[1, 1] = y_scale
+    scale_matrix[2, 2] = z_scale
+
+    # Create a translation matrix
+    translation_matrix = np.eye(4)
+    translation_matrix[0, 3] = x_offset
+    translation_matrix[1, 3] = y_offset
+    translation_matrix[2, 3] = z_offset
+
+    # Combine the scaling and translation matrices
+    transformation_matrix = translation_matrix @ scale_matrix
+
+    # Apply the transformation to a copy of the mesh to avoid modifying the original
+    transformed_mesh = mesh.copy()
+    transformed_mesh.apply_transform(transformation_matrix)
+
+    return transformed_mesh

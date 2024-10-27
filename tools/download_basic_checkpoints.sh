@@ -40,7 +40,7 @@ wget -nc "https://civitai.com/api/download/models/125843" -O 4xUltrasharp.pt
 popd
 
 pushd loras/
-wget -nc https://huggingface.co/latent-consistency/lcm-lora-sdv1-5/resolve/main/pytorch_lora_weights.safetensors
+wget -nc https://huggingface.co/latent-consistency/lcm-lora-sdv1-5/resolve/main/pytorch_lora_weights.safetensors -O lcm_lora.safetensors
 wget -nc https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_adapter.ckpt
 
 wget -nc https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sd15_lora.safetensors
