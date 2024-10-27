@@ -121,6 +121,6 @@ ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 ENV TORCH_CUDA_ARCH_LIST="8.0 8.6 8.9+PTX"
 # RUN python install.py
 
-# WORKDIR /workdir/ComfyUI/
+WORKDIR /workdir/ComfyUI/
 
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
