@@ -156,7 +156,7 @@ def align_images(source_img, target_img):
         mutation=(0.5, 1),
         recombination=0.7,
         polish=True,
-        disp=True
+        disp=False
     )
 
     # Extract the optimal parameters
@@ -239,11 +239,14 @@ class AlignMeshToMasks:
             output_mesh_file_path = os.path.join(comfy_paths.output_directory, output_mesh_file_path)
 
         if os.path.exists(input_mesh_file_path):
-            mesh = trimesh.load(input_mesh_file_path)
+            import importlib
+            Mesh = importlib.import_module('custom_nodes.ComfyUI-3D-Pack.mesh_processer.mesh').Mesh
+            mesh = Mesh.load(input_mesh_file_path, resize=False)
+            trimesh_mesh = trimesh.load(input_mesh_file_path)
         else:
             print(f"[{self.__class__.__name__}] File {input_mesh_file_path} does not exist")
 
-        original_mesh_silh = mesh_silhouette_images(mesh)
+        original_mesh_silh = mesh_silhouette_images(trimesh_mesh)
 
         target_silh = [
             masks[0].cpu().numpy().astype(np.uint8)[:, :, 0] * 255,
@@ -266,11 +269,11 @@ class AlignMeshToMasks:
         offset_y = params1.x[2]
         offset_z = params2.x[1]
 
-        # aligned_mesh = transform_mesh(aligned_mesh, offset_x, offset_y, offset_z, *[scale] * 3)
-        # aligned_mesh = transform_mesh(mesh, 0, 0, 0, *[scale] * 3)
         aligned_mesh = mesh
+        aligned_mesh = transform_mesh(mesh, 0, 0, 0, *[scale] * 3)
+
         # aligned_mesh_slih = mesh_silhouette_images(aligned_mesh)
-        aligned_mesh.export(output_mesh_file_path)
+        aligned_mesh.write(output_mesh_file_path)
 
         return (output_mesh_file_path,)
 
@@ -344,36 +347,29 @@ def mesh_silhouette_images(mesh):
 
 
 def transform_mesh(mesh, x_offset, y_offset, z_offset, x_scale, y_scale, z_scale):
-    """
-    WARNING: AI generated
+    if isinstance(mesh, trimesh.Trimesh):
+        scale_matrix = np.eye(4)
+        scale_matrix[0, 0] = x_scale
+        scale_matrix[1, 1] = y_scale
+        scale_matrix[2, 2] = z_scale
 
-    Apply scaling and translation to a mesh.
+        translation_matrix = np.eye(4)
+        translation_matrix[0, 3] = x_offset
+        translation_matrix[1, 3] = y_offset
+        translation_matrix[2, 3] = z_offset
 
-    Parameters:
-    - mesh: trimesh.Trimesh object
-    - x_offset, y_offset, z_offset: translation offsets along x, y, z axes
-    - x_scale, y_scale, z_scale: scaling factors along x, y, z axes
+        transformation_matrix = translation_matrix @ scale_matrix
 
-    Returns:
-    - transformed_mesh: the transformed trimesh.Trimesh object
-    """
-    # Create a scaling matrix
-    scale_matrix = np.eye(4)
-    scale_matrix[0, 0] = x_scale
-    scale_matrix[1, 1] = y_scale
-    scale_matrix[2, 2] = z_scale
+        transformed_mesh = mesh
+        transformed_mesh.apply_transform(transformation_matrix)
+    else:
+        transformed_mesh = mesh
+        transformed_mesh.v[:, 0] *= x_scale
+        transformed_mesh.v[:, 1] *= y_scale
+        transformed_mesh.v[:, 2] *= z_scale
 
-    # Create a translation matrix
-    translation_matrix = np.eye(4)
-    translation_matrix[0, 3] = x_offset
-    translation_matrix[1, 3] = y_offset
-    translation_matrix[2, 3] = z_offset
-
-    # Combine the scaling and translation matrices
-    transformation_matrix = translation_matrix @ scale_matrix
-
-    # Apply the transformation to a copy of the mesh to avoid modifying the original
-    transformed_mesh = mesh.copy()
-    transformed_mesh.apply_transform(transformation_matrix)
+        transformed_mesh.v[:, 0] += x_offset
+        transformed_mesh.v[:, 1] += y_offset
+        transformed_mesh.v[:, 2] += z_offset
 
     return transformed_mesh
