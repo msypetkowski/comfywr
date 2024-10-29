@@ -269,8 +269,7 @@ class AlignMeshToMasks:
         offset_y = params1.x[2]
         offset_z = params2.x[1]
 
-        aligned_mesh = mesh
-        aligned_mesh = transform_mesh(mesh, 0, 0, 0, *[scale] * 3)
+        aligned_mesh = transform_mesh(mesh, offset_x, offset_y, offset_z, *[scale] * 3)
 
         # aligned_mesh_slih = mesh_silhouette_images(aligned_mesh)
         aligned_mesh.write(output_mesh_file_path)
@@ -347,7 +346,13 @@ def mesh_silhouette_images(mesh):
 
 
 def transform_mesh(mesh, x_offset, y_offset, z_offset, x_scale, y_scale, z_scale):
+    pivot_point = (-0.5, -0.5, -0.5)
     if isinstance(mesh, trimesh.Trimesh):
+        pivot_matrix = np.eye(4)
+        pivot_matrix[0, 3] = pivot_point[0]
+        pivot_matrix[1, 3] = pivot_point[1]
+        pivot_matrix[2, 3] = pivot_point[2]
+
         scale_matrix = np.eye(4)
         scale_matrix[0, 0] = x_scale
         scale_matrix[1, 1] = y_scale
@@ -358,12 +363,17 @@ def transform_mesh(mesh, x_offset, y_offset, z_offset, x_scale, y_scale, z_scale
         translation_matrix[1, 3] = y_offset
         translation_matrix[2, 3] = z_offset
 
-        transformation_matrix = translation_matrix @ scale_matrix
+        transformation_matrix = pivot_matrix @ translation_matrix @ scale_matrix @ np.linalg.inv(pivot_matrix)
 
         transformed_mesh = mesh
         transformed_mesh.apply_transform(transformation_matrix)
     else:
         transformed_mesh = mesh
+
+        transformed_mesh.v[:, 0] -= pivot_point[0]
+        transformed_mesh.v[:, 1] -= pivot_point[1]
+        transformed_mesh.v[:, 2] -= pivot_point[2]
+
         transformed_mesh.v[:, 0] *= x_scale
         transformed_mesh.v[:, 1] *= y_scale
         transformed_mesh.v[:, 2] *= z_scale
@@ -371,5 +381,9 @@ def transform_mesh(mesh, x_offset, y_offset, z_offset, x_scale, y_scale, z_scale
         transformed_mesh.v[:, 0] += x_offset
         transformed_mesh.v[:, 1] += y_offset
         transformed_mesh.v[:, 2] += z_offset
+
+        transformed_mesh.v[:, 0] += pivot_point[0]
+        transformed_mesh.v[:, 1] += pivot_point[1]
+        transformed_mesh.v[:, 2] += pivot_point[2]
 
     return transformed_mesh
