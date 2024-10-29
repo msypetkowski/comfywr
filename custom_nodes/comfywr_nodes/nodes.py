@@ -225,9 +225,11 @@ class AlignMeshToMasks:
 
     RETURN_TYPES = (
         "STRING",
+        "IMAGE",
     )
     RETURN_NAMES = (
         "output_mesh_file_path",
+        "visualization",
     )
     FUNCTION = "align_mesh"
     CATEGORY = "comfywr_nodes"
@@ -260,7 +262,6 @@ class AlignMeshToMasks:
         aligned2, params2 = align_images(original_mesh_silh[1].astype(np.uint8) * 255,
                                          target_silh[1].astype(np.uint8) * 255)
         print('Params:', params1.x, params2.x)
-        # aligned_silh = [aligned1 > 0, aligned2 > 0]
 
         # scale = (params1.x[0] + params2.x[0]) / 2
         scale = params1.x[0]
@@ -270,11 +271,15 @@ class AlignMeshToMasks:
         offset_z = params2.x[1]
 
         aligned_mesh = transform_mesh(mesh, offset_x, offset_y, offset_z, *[scale] * 3)
-
-        # aligned_mesh_slih = mesh_silhouette_images(aligned_mesh)
         aligned_mesh.write(output_mesh_file_path)
 
-        return (output_mesh_file_path,)
+        aligned_trimesh = transform_mesh(trimesh_mesh, offset_x, offset_y, offset_z, *[scale] * 3)
+        aligned_mesh_slih = mesh_silhouette_images(aligned_trimesh)
+        aligned_silh = [aligned1 > 0, aligned2 > 0]
+        vis = visualize_silhouettes([original_mesh_silh, aligned_silh, aligned_mesh_slih, target_silh])
+
+        vis = torch.tensor(vis.astype(np.float32) / 255).unsqueeze(0).cuda()
+        return (output_mesh_file_path, vis)
 
 
 def mesh_silhouette_images(mesh):
@@ -324,7 +329,7 @@ def mesh_silhouette_images(mesh):
         # YZ projection (view along +X direction)
         y = tri[:, 1]
         z = tri[:, 2]
-        px = coord_to_pixel(z)
+        px = coord_to_pixel_flipped(z)
         py = coord_to_pixel_flipped(y)
         points = list(zip(px, py))
         draw_yz.polygon(points, fill=1)
@@ -387,3 +392,15 @@ def transform_mesh(mesh, x_offset, y_offset, z_offset, x_scale, y_scale, z_scale
         transformed_mesh.v[:, 2] += pivot_point[2]
 
     return transformed_mesh
+
+
+def visualize_silhouettes(silhouettes):
+    vis = np.zeros((silhouettes[0][0].shape[0], silhouettes[1][1].shape[1] * 2, 3), dtype=np.uint8)
+    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
+    for s, col in zip(silhouettes, colors):
+        assert 0 < np.mean(s) < 1
+        mask = np.concatenate(s, 1).astype(np.uint8) * 255
+        assert mask.shape == vis.shape[:2]
+        edges = cv2.dilate(mask, np.ones((3, 3))) - cv2.erode(mask, np.ones((3, 3)))
+        vis[edges > 0] = col
+    return vis
