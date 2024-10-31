@@ -16,7 +16,7 @@ do_one main was-node-suite-comfyui
 do_one main ComfyUI-3D-Pack
 do_one main ComfyUI_essentials
 do_one main comfyui_marigold
-do_one main ComfyUI_IPAdapter_plus/
+# do_one main ComfyUI_IPAdapter_plus/
 do_one Main ComfyUI-Impact-Pack//
 do_one Main ComfyUI-Impact-Pack/
 do_one main ComfyUI_UltimateSDUpscale/
