@@ -118,7 +118,7 @@ def alignment_objective_function(params, source_img, target_img, padding_color):
     return mse
 
 
-def align_images(source_img, target_img):
+def align_images(source_img, target_img, x0):
     """
     Uses differential evolution to find the affine transformation (scaling and translation)
     that minimizes the MSE between the transformed source image and the target image.
@@ -147,16 +147,16 @@ def align_images(source_img, target_img):
     result = differential_evolution(
         alignment_objective_function,
         bounds,
-        x0=[1.0, 0.25, 0],
+        x0=x0,
         args=(source_img, target_img, padding_color),
         strategy='best1bin',
         maxiter=100,
-        popsize=4,
+        popsize=5,
         tol=0.01,
         mutation=(0.5, 1),
         recombination=0.7,
         polish=True,
-        disp=False
+        disp=True
     )
 
     # Extract the optimal parameters
@@ -185,7 +185,11 @@ class ImageAligner:
     def INPUT_TYPES(s):
         return {
             "required": {"source": ("IMAGE",),
-                         "target": ("IMAGE",)},
+                         "target": ("IMAGE",),
+                         "scale_guess": ("FLOAT", {"default": 1.0}),
+                         "x_offset_guess": ("FLOAT", {"default": 0.,"min": -1.5, "max": 1.5, "step": 0.01}),
+                         "y_offset_guess": ("FLOAT", {"default": 0.,"min": -1.5, "max": 1.5, "step": 0.01}),
+                         },
         }
 
     # RETURN_TYPES = ()
@@ -198,15 +202,16 @@ class ImageAligner:
 
     CATEGORY = "comfywr_nodes"
 
-    def align(self, source, target):
+    def align(self, source, target, scale_guess, x_offset_guess, y_offset_guess):
         assert len(source.shape) == 4
         assert len(target.shape) == 4
+        x0 = [scale_guess, x_offset_guess, y_offset_guess]
 
         result = []
         for src, trgt in zip(source, target):
             src = src.cpu().numpy()
             trgt = trgt.cpu().numpy()
-            result.append(align_images(src, trgt)[0])
+            result.append(align_images(src, trgt, x0)[0])
             assert result[-1].shape == trgt.shape
 
         return (torch.tensor(np.stack(result).astype(np.float32)).to(target.device),)
@@ -220,6 +225,10 @@ class AlignMeshToMasks:
                 "input_mesh_file_path": ("STRING", {"default": '', "multiline": False}),
                 "output_mesh_file_path": ("STRING", {"default": '', "multiline": False}),
                 "masks": ("IMAGE",),
+                "scale_guess": ("FLOAT", {"default": 1.0}),
+                "x_offset_guess": ("FLOAT", {"default": 0., "min": -1.5, "max": 1.5, "step": 0.01}),
+                "y_offset_guess": ("FLOAT", {"default": 0., "min": -1.5, "max": 1.5, "step": 0.01}),
+                "z_offset_guess": ("FLOAT", {"default": 0., "min": -1.5, "max": 1.5, "step": 0.01}),
             },
         }
 
@@ -234,7 +243,8 @@ class AlignMeshToMasks:
     FUNCTION = "align_mesh"
     CATEGORY = "comfywr_nodes"
 
-    def align_mesh(self, input_mesh_file_path, output_mesh_file_path, masks):
+    def align_mesh(self, input_mesh_file_path, output_mesh_file_path, masks,
+                   scale_guess, x_offset_guess, y_offset_guess, z_offset_guess):
         if not os.path.isabs(input_mesh_file_path):
             input_mesh_file_path = os.path.join(comfy_paths.input_directory, input_mesh_file_path)
         if not os.path.isabs(output_mesh_file_path):
@@ -257,18 +267,20 @@ class AlignMeshToMasks:
         for i in range(2):
             target_silh[i] = cv2.resize(target_silh[i], (1024, 1024)) > 0
 
+        x0 = [scale_guess, x_offset_guess, y_offset_guess]
         aligned1, params1 = align_images(original_mesh_silh[0].astype(np.uint8) * 255,
-                                         target_silh[0].astype(np.uint8) * 255)
+                                         target_silh[0].astype(np.uint8) * 255, x0)
+        x0 = [scale_guess, z_offset_guess, y_offset_guess]
         aligned2, params2 = align_images(original_mesh_silh[1].astype(np.uint8) * 255,
-                                         target_silh[1].astype(np.uint8) * 255)
+                                         target_silh[1].astype(np.uint8) * 255, x0)
         print('Params:', params1.x, params2.x)
 
         # scale = (params1.x[0] + params2.x[0]) / 2
         scale = params1.x[0]
-        offset_x = params1.x[1]
+        offset_x = params1.x[1] * 2
         # offset_y = (params1.x[2] + params2.x[2]) / 2
-        offset_y = params1.x[2]
-        offset_z = params2.x[1]
+        offset_y = -params1.x[2] * 2
+        offset_z = -params2.x[1] * 2
 
         aligned_mesh = transform_mesh(mesh, offset_x, offset_y, offset_z, *[scale] * 3)
         aligned_mesh.write(output_mesh_file_path)
@@ -276,7 +288,7 @@ class AlignMeshToMasks:
         aligned_trimesh = transform_mesh(trimesh_mesh, offset_x, offset_y, offset_z, *[scale] * 3)
         aligned_mesh_slih = mesh_silhouette_images(aligned_trimesh)
         aligned_silh = [aligned1 > 0, aligned2 > 0]
-        vis = visualize_silhouettes([original_mesh_silh, aligned_silh, aligned_mesh_slih, target_silh])
+        vis = visualize_silhouettes([target_silh, original_mesh_silh, aligned_silh, aligned_mesh_slih])
 
         vis = torch.tensor(vis.astype(np.float32) / 255).unsqueeze(0).cuda()
         return (output_mesh_file_path, vis)
@@ -294,6 +306,8 @@ def mesh_silhouette_images(mesh):
     Returns:
     tuple: Three 1024x1024 binary numpy arrays representing the silhouettes on the XY, YZ, and XZ planes.
     """
+    mesh = mesh.copy()
+
     # Get vertices and faces from the mesh
     vertices = mesh.vertices  # shape (n_vertices, 3)
     faces = mesh.faces  # shape (n_faces, 3)
@@ -311,12 +325,22 @@ def mesh_silhouette_images(mesh):
 
     # Mapping functions from coordinate space [-1, 1] to pixel space [0, 1023]
     def coord_to_pixel(coord):
-        return ((coord + 1.0) * 511.5).round().astype(int)
+        # return ((coord + 1.0) * 511.5).round().astype(int)
+        # assert ((-1.0 <= coord) & (coord <= 1.0)).all(), coord
+        coord = (coord + 1) / 2
+        return (coord * 1023).round().astype(int)
 
     def coord_to_pixel_flipped(coord):
-        return ((1.0 - coord) * 511.5).round().astype(int)
+        # return ((1.0 - coord) * 511.5).round().astype(int)
+        # assert ((-1.0 <= coord) & (coord <= 1.0)).all(), coord
+        coord = (coord + 1) / 2
+        return ((1 - coord) * 1023).round().astype(int)
 
     # Loop over each triangle to project and draw on the images
+
+    # assert ((-1.0 <= triangles) & (triangles <= 1.0)).all()
+    # assert ((-0.5 >= triangles) | (triangles >= 0.5)).any()
+
     for tri in triangles:
         # XY projection (view along +Z direction)
         x = tri[:, 0]
@@ -351,7 +375,8 @@ def mesh_silhouette_images(mesh):
 
 
 def transform_mesh(mesh, x_offset, y_offset, z_offset, x_scale, y_scale, z_scale):
-    pivot_point = (-0.5, -0.5, -0.5)
+    pivot_point = (-1.0, 1.0, 1.0)
+    # pivot_point = (0, 0, 0)
     if isinstance(mesh, trimesh.Trimesh):
         pivot_matrix = np.eye(4)
         pivot_matrix[0, 3] = pivot_point[0]
@@ -374,29 +399,30 @@ def transform_mesh(mesh, x_offset, y_offset, z_offset, x_scale, y_scale, z_scale
         transformed_mesh.apply_transform(transformation_matrix)
     else:
         transformed_mesh = mesh
+        verts = transformed_mesh.v
 
-        transformed_mesh.v[:, 0] -= pivot_point[0]
-        transformed_mesh.v[:, 1] -= pivot_point[1]
-        transformed_mesh.v[:, 2] -= pivot_point[2]
+        verts[:, 0] -= pivot_point[0]
+        verts[:, 1] -= pivot_point[1]
+        verts[:, 2] -= pivot_point[2]
 
-        transformed_mesh.v[:, 0] *= x_scale
-        transformed_mesh.v[:, 1] *= y_scale
-        transformed_mesh.v[:, 2] *= z_scale
+        verts[:, 0] *= x_scale
+        verts[:, 1] *= y_scale
+        verts[:, 2] *= z_scale
 
-        transformed_mesh.v[:, 0] += x_offset
-        transformed_mesh.v[:, 1] += y_offset
-        transformed_mesh.v[:, 2] += z_offset
+        verts[:, 0] += x_offset
+        verts[:, 1] += y_offset
+        verts[:, 2] += z_offset
 
-        transformed_mesh.v[:, 0] += pivot_point[0]
-        transformed_mesh.v[:, 1] += pivot_point[1]
-        transformed_mesh.v[:, 2] += pivot_point[2]
+        verts[:, 0] += pivot_point[0]
+        verts[:, 1] += pivot_point[1]
+        verts[:, 2] += pivot_point[2]
 
     return transformed_mesh
 
 
 def visualize_silhouettes(silhouettes):
     vis = np.zeros((silhouettes[0][0].shape[0], silhouettes[1][1].shape[1] * 2, 3), dtype=np.uint8)
-    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
+    colors = [(255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255), (100, 100, 100)]
     for s, col in zip(silhouettes, colors):
         assert 0 < np.mean(s) < 1
         mask = np.concatenate(s, 1).astype(np.uint8) * 255
