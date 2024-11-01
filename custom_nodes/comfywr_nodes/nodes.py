@@ -156,7 +156,7 @@ def align_images(source_img, target_img):
         mutation=(0.5, 1),
         recombination=0.7,
         polish=True,
-        disp=True
+        disp=False
     )
 
     # Extract the optimal parameters
@@ -225,9 +225,11 @@ class AlignMeshToMasks:
 
     RETURN_TYPES = (
         "STRING",
+        "IMAGE",
     )
     RETURN_NAMES = (
         "output_mesh_file_path",
+        "visualization",
     )
     FUNCTION = "align_mesh"
     CATEGORY = "comfywr_nodes"
@@ -239,11 +241,14 @@ class AlignMeshToMasks:
             output_mesh_file_path = os.path.join(comfy_paths.output_directory, output_mesh_file_path)
 
         if os.path.exists(input_mesh_file_path):
-            mesh = trimesh.load(input_mesh_file_path)
+            import importlib
+            Mesh = importlib.import_module('custom_nodes.ComfyUI-3D-Pack.mesh_processer.mesh').Mesh
+            mesh = Mesh.load(input_mesh_file_path, resize=False)
+            trimesh_mesh = trimesh.load(input_mesh_file_path)
         else:
             print(f"[{self.__class__.__name__}] File {input_mesh_file_path} does not exist")
 
-        original_mesh_silh = mesh_silhouette_images(mesh)
+        original_mesh_silh = mesh_silhouette_images(trimesh_mesh)
 
         target_silh = [
             masks[0].cpu().numpy().astype(np.uint8)[:, :, 0] * 255,
@@ -257,7 +262,6 @@ class AlignMeshToMasks:
         aligned2, params2 = align_images(original_mesh_silh[1].astype(np.uint8) * 255,
                                          target_silh[1].astype(np.uint8) * 255)
         print('Params:', params1.x, params2.x)
-        # aligned_silh = [aligned1 > 0, aligned2 > 0]
 
         # scale = (params1.x[0] + params2.x[0]) / 2
         scale = params1.x[0]
@@ -266,13 +270,16 @@ class AlignMeshToMasks:
         offset_y = params1.x[2]
         offset_z = params2.x[1]
 
-        # aligned_mesh = transform_mesh(aligned_mesh, offset_x, offset_y, offset_z, *[scale] * 3)
-        # aligned_mesh = transform_mesh(mesh, 0, 0, 0, *[scale] * 3)
-        aligned_mesh = mesh
-        # aligned_mesh_slih = mesh_silhouette_images(aligned_mesh)
-        aligned_mesh.export(output_mesh_file_path)
+        aligned_mesh = transform_mesh(mesh, offset_x, offset_y, offset_z, *[scale] * 3)
+        aligned_mesh.write(output_mesh_file_path)
 
-        return (output_mesh_file_path,)
+        aligned_trimesh = transform_mesh(trimesh_mesh, offset_x, offset_y, offset_z, *[scale] * 3)
+        aligned_mesh_slih = mesh_silhouette_images(aligned_trimesh)
+        aligned_silh = [aligned1 > 0, aligned2 > 0]
+        vis = visualize_silhouettes([original_mesh_silh, aligned_silh, aligned_mesh_slih, target_silh])
+
+        vis = torch.tensor(vis.astype(np.float32) / 255).unsqueeze(0).cuda()
+        return (output_mesh_file_path, vis)
 
 
 def mesh_silhouette_images(mesh):
@@ -322,7 +329,7 @@ def mesh_silhouette_images(mesh):
         # YZ projection (view along +X direction)
         y = tri[:, 1]
         z = tri[:, 2]
-        px = coord_to_pixel(z)
+        px = coord_to_pixel_flipped(z)
         py = coord_to_pixel_flipped(y)
         points = list(zip(px, py))
         draw_yz.polygon(points, fill=1)
@@ -344,36 +351,56 @@ def mesh_silhouette_images(mesh):
 
 
 def transform_mesh(mesh, x_offset, y_offset, z_offset, x_scale, y_scale, z_scale):
-    """
-    WARNING: AI generated
+    pivot_point = (-0.5, -0.5, -0.5)
+    if isinstance(mesh, trimesh.Trimesh):
+        pivot_matrix = np.eye(4)
+        pivot_matrix[0, 3] = pivot_point[0]
+        pivot_matrix[1, 3] = pivot_point[1]
+        pivot_matrix[2, 3] = pivot_point[2]
 
-    Apply scaling and translation to a mesh.
+        scale_matrix = np.eye(4)
+        scale_matrix[0, 0] = x_scale
+        scale_matrix[1, 1] = y_scale
+        scale_matrix[2, 2] = z_scale
 
-    Parameters:
-    - mesh: trimesh.Trimesh object
-    - x_offset, y_offset, z_offset: translation offsets along x, y, z axes
-    - x_scale, y_scale, z_scale: scaling factors along x, y, z axes
+        translation_matrix = np.eye(4)
+        translation_matrix[0, 3] = x_offset
+        translation_matrix[1, 3] = y_offset
+        translation_matrix[2, 3] = z_offset
 
-    Returns:
-    - transformed_mesh: the transformed trimesh.Trimesh object
-    """
-    # Create a scaling matrix
-    scale_matrix = np.eye(4)
-    scale_matrix[0, 0] = x_scale
-    scale_matrix[1, 1] = y_scale
-    scale_matrix[2, 2] = z_scale
+        transformation_matrix = pivot_matrix @ translation_matrix @ scale_matrix @ np.linalg.inv(pivot_matrix)
 
-    # Create a translation matrix
-    translation_matrix = np.eye(4)
-    translation_matrix[0, 3] = x_offset
-    translation_matrix[1, 3] = y_offset
-    translation_matrix[2, 3] = z_offset
+        transformed_mesh = mesh
+        transformed_mesh.apply_transform(transformation_matrix)
+    else:
+        transformed_mesh = mesh
 
-    # Combine the scaling and translation matrices
-    transformation_matrix = translation_matrix @ scale_matrix
+        transformed_mesh.v[:, 0] -= pivot_point[0]
+        transformed_mesh.v[:, 1] -= pivot_point[1]
+        transformed_mesh.v[:, 2] -= pivot_point[2]
 
-    # Apply the transformation to a copy of the mesh to avoid modifying the original
-    transformed_mesh = mesh.copy()
-    transformed_mesh.apply_transform(transformation_matrix)
+        transformed_mesh.v[:, 0] *= x_scale
+        transformed_mesh.v[:, 1] *= y_scale
+        transformed_mesh.v[:, 2] *= z_scale
+
+        transformed_mesh.v[:, 0] += x_offset
+        transformed_mesh.v[:, 1] += y_offset
+        transformed_mesh.v[:, 2] += z_offset
+
+        transformed_mesh.v[:, 0] += pivot_point[0]
+        transformed_mesh.v[:, 1] += pivot_point[1]
+        transformed_mesh.v[:, 2] += pivot_point[2]
 
     return transformed_mesh
+
+
+def visualize_silhouettes(silhouettes):
+    vis = np.zeros((silhouettes[0][0].shape[0], silhouettes[1][1].shape[1] * 2, 3), dtype=np.uint8)
+    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
+    for s, col in zip(silhouettes, colors):
+        assert 0 < np.mean(s) < 1
+        mask = np.concatenate(s, 1).astype(np.uint8) * 255
+        assert mask.shape == vis.shape[:2]
+        edges = cv2.dilate(mask, np.ones((3, 3))) - cv2.erode(mask, np.ones((3, 3)))
+        vis[edges > 0] = col
+    return vis
