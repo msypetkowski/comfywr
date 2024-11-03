@@ -10,6 +10,7 @@ mkdir -p downloaded_models/clip_vision/
 cd downloaded_models
 
 pushd checkpoints/
+wget -nc https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors
 wget -nc https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaper_8_pruned.safetensors
 # wget -nc https://huggingface.co/Yntec/mistoonAnime2/resolve/main/mistoonAnime_v20_vae.safetensors
 # wget -nc https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaperXL_Turbo_dpmppSdeKarras_half_pruned_6.safetensors

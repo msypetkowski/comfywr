@@ -276,16 +276,18 @@ class AlignMeshToMasks:
         print('Params:', params1.x, params2.x)
 
         # scale = (params1.x[0] + params2.x[0]) / 2
-        scale = params1.x[0]
+        scale_xy = params1.x[0]
+        scale_z = params2.x[0]
+        scale = [scale_xy] * 2 + [scale_z]
         offset_x = params1.x[1] * 2
         # offset_y = (params1.x[2] + params2.x[2]) / 2
         offset_y = -params1.x[2] * 2
         offset_z = -params2.x[1] * 2
 
-        aligned_mesh = transform_mesh(mesh, offset_x, offset_y, offset_z, *[scale] * 3)
+        aligned_mesh = transform_mesh(mesh, offset_x, offset_y, offset_z, *scale)
         aligned_mesh.write(output_mesh_file_path)
 
-        aligned_trimesh = transform_mesh(trimesh_mesh, offset_x, offset_y, offset_z, *[scale] * 3)
+        aligned_trimesh = transform_mesh(trimesh_mesh, offset_x, offset_y, offset_z, *scale)
         aligned_mesh_slih = mesh_silhouette_images(aligned_trimesh)
         aligned_silh = [aligned1 > 0, aligned2 > 0]
         vis = visualize_silhouettes([target_silh, original_mesh_silh, aligned_silh, aligned_mesh_slih])
