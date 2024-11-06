@@ -120,38 +120,39 @@ def alignment_objective_function(params, source_img, target_img, padding_color):
 def scale_image_by(img, ratio):
     return cv2.resize(img, (round(img.shape[1] * ratio), round(img.shape[0] * ratio)))
 
-def align_images(source_img, target_img, x0, downscale_for_optim=0.25):
+def align_images(source_img, target_img, x0, downscale_for_optim=0.3):
     """
     Uses differential evolution to find the affine transformation (scaling and translation)
     that minimizes the MSE between the transformed source image and the target image.
     Returns the transformed image and the optimization result.
     """
 
+    result, _ = _align_images(source_img, target_img, x0, downscale_for_optim / 5, 64)
+    result, transformed_img = _align_images(source_img, target_img, result.x, downscale_for_optim, 5)
+
+    return transformed_img, result
+
+
+def _align_images(source_img, target_img, x0, downscale_for_optim, popsize):
     # assume the first column of pixels defines padding/background color
     padding_color = np.median(target_img[:, 0], axis=0)
 
-
-    # Initially rescale source image for optimization
-    ratio = source_img.shape[0] / target_img.shape[1]
-    source_img = scale_image_by(source_img, 1 / ratio)
-
-    # Downscale source and target image for optimization
     source_img_orig = source_img
     h_target_orig, w_target_orig = target_img.shape[:2]
+
+    # Initially rescale source image for optimization
+    initial_downscale_ratio = target_img.shape[1] / source_img.shape[0]
+    source_img = scale_image_by(source_img, initial_downscale_ratio)
+
+    # Downscale source and target image for optimization
     source_img = scale_image_by(source_img, downscale_for_optim)
     target_img = scale_image_by(target_img, downscale_for_optim)
-
-    # Get dimensions of the images
-    h_source, w_source = source_img.shape[:2]
-    h_target, w_target = target_img.shape[:2]
-
     # Set bounds for the affine transformation parameters
     bounds = [
-        (0.5, 2.0),  # s (scaling in x and y)
-        (-0.5, 0.5),  # t_x (translation in x)
-        (-0.5, 0.5),  # t_y (translation in y)
+        (0.4, 2.2),  # s (scaling in x and y)
+        (-0.4, 0.6),  # t_x (translation in x)
+        (-0.4, 0.6),  # t_y (translation in y)
     ]
-
     # Perform the optimization
     result = differential_evolution(
         alignment_objective_function,
@@ -160,31 +161,28 @@ def align_images(source_img, target_img, x0, downscale_for_optim=0.25):
         args=(source_img, target_img, padding_color),
         strategy='best1bin',
         maxiter=100,
-        popsize=10,
-        tol=0.005,
+        popsize=popsize,
+        tol=0.004,
         mutation=(0.5, 1),
         recombination=0.7,
         polish=True,
         disp=True
     )
-
     # Extract the optimal parameters
     s, t_x, t_y = result.x
+    s = s * initial_downscale_ratio
     print('Found transform:', s, t_x, t_y)
     t_x *= w_target_orig
     t_y *= h_target_orig
-
     # Build the affine transformation matrix with the optimal parameters
     M = np.array([[s, 0, t_x],
                   [0, s, t_y]], dtype=np.float32)
-
     # Apply the optimal affine transformation
     transformed_img = cv2.warpAffine(source_img_orig, M, (w_target_orig, h_target_orig),
                                      flags=cv2.INTER_LINEAR,
                                      borderMode=cv2.BORDER_CONSTANT,
                                      borderValue=padding_color.tolist())
-
-    return transformed_img, result
+    return result, transformed_img
 
 
 class ImageAligner:
