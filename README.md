@@ -23,8 +23,3 @@ git submodule update --init --recursive
 # for jupyter notebooks server
 # ./tools/run_docker_nb.sh
 ```
-
-Examples
---------
-
-See example notebooks in `./notebooks/`
