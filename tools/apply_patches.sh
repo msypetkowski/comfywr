@@ -1,9 +1,9 @@
-pushd ComfyUI/
+# pushd ComfyUI/
 # git apply ../patches/cui.patch
-popd
+# popd
 
 pushd custom_nodes/ComfyUI-3D-Pack/
-git apply ../../patches/3d_pack.diff
+git apply ../../patches/comfyui_3d_pack.diff
 popd
 
 pushd custom_nodes/ComfyUI-ModelUnloader//

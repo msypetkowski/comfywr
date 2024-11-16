@@ -1,0 +1,129 @@
+diff --git a/MVs_Algorithms/DiffRastMesh/diff_mesh.py b/MVs_Algorithms/DiffRastMesh/diff_mesh.py
+index cb8f314..8a17825 100644
+--- a/MVs_Algorithms/DiffRastMesh/diff_mesh.py
++++ b/MVs_Algorithms/DiffRastMesh/diff_mesh.py
+@@ -18,7 +18,10 @@ from shared_utils.image_utils import prepare_torch_img
+ class DiffMeshCameraController(BaseCameraController):
+     
+     def get_render_result(self, render_pose, bg_color, **kwargs):
+-        ref_cam = (render_pose, self.cam.perspective)
++        if self.cam.use_perspective:
++            ref_cam = (render_pose, self.cam.perspective)
++        else:
++            ref_cam = (render_pose, self.cam.ortho)
+         return self.renderer.render(*ref_cam, self.cam.H, self.cam.W, ssaa=1, bg_color=bg_color, **kwargs) #ssaa = min(2.0, max(0.125, 2 * np.random.random()))
+ 
+ class DiffMesh:
+diff --git a/nodes.py b/nodes.py
+index 88d7053..a781462 100644
+--- a/nodes.py
++++ b/nodes.py
+@@ -946,6 +946,7 @@ class Mesh_Orbit_Renderer:
+                 "render_background_color_g": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
+                 "render_background_color_b": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
+                 "force_cuda_rasterize": ("BOOLEAN", {"default": False},),
++                "use_perspective": ("BOOLEAN", {"default": True},),
+             },
+             
+             "optional": {
+@@ -985,6 +986,7 @@ class Mesh_Orbit_Renderer:
+         force_cuda_rasterize,
+         render_depth=False,
+         render_normal=False,
++        use_perspective=True,
+     ):
+         
+         renderer = DiffRastRenderer(mesh, force_cuda_rasterize)
+@@ -994,13 +996,14 @@ class Mesh_Orbit_Renderer:
+             optional_render_types.append('depth')
+         if render_normal:
+             optional_render_types.append('normal')
+-        
++
+         cam_controller = DiffMeshCameraController(
+-            renderer, 
++            renderer,
+             render_image_width, 
+             render_image_height, 
+             render_orbit_camera_fovy, 
+-            static_bg=[render_background_color_r, render_background_color_g, render_background_color_b]
++            static_bg=[render_background_color_r, render_background_color_g, render_background_color_b],
++            use_perspective=use_perspective,
+         )
+         
+         extra_kwargs = {"optional_render_types": optional_render_types}
+diff --git a/shared_utils/camera_utils.py b/shared_utils/camera_utils.py
+index bfe2279..568926f 100644
+--- a/shared_utils/camera_utils.py
++++ b/shared_utils/camera_utils.py
+@@ -86,13 +86,14 @@ def get_look_at_camera_pose(target, target_to_cam_offset, look_distance=0.1, ope
+     return T
+ 
+ class OrbitCamera:
+-    def __init__(self, W, H, r=2, fovy=60, near=0.01, far=100):
++    def __init__(self, W, H, r=2, fovy=60, near=0.01, far=100, use_perspective=True):
+         self.W = W
+         self.H = H
+         self.radius = r  # camera distance from center
+         self.fovy = np.deg2rad(fovy)  # deg 2 rad
+         self.near = near
+         self.far = far
++        self.use_perspective = use_perspective
+         self.center = np.array([0, 0, 0], dtype=np.float32)  # look at this point
+         self.rot = R.from_matrix(np.eye(3))
+         self.up = np.array([0, 1, 0], dtype=np.float32)  # need to be normalized!
+@@ -144,6 +145,28 @@ class OrbitCamera:
+             dtype=np.float32,
+         )
+ 
++    @property
++    def ortho(self):
++        y = np.tan(self.fovy / 2)
++        aspect = self.W / self.H
++
++        left = -y * aspect
++        right = y * aspect
++        bottom = y
++        top = -y
++        near = self.near
++        far = self.far
++
++        return np.array(
++            [
++                [2 / (right - left), 0, 0, -(right + left) / (right - left)],
++                [0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom)],
++                [0, 0, -2 / (far - near), -(far + near) / (far - near)],
++                [0, 0, 0, 1],
++            ],
++            dtype=np.float32,
++        )
++
+     # intrinsics
+     @property
+     def intrinsics(self):
+@@ -152,7 +175,9 @@ class OrbitCamera:
+ 
+     @property
+     def mvp(self):
+-        return self.perspective @ np.linalg.inv(self.pose)  # [4, 4]
++        if self.use_perspective:
++            return self.perspective @ np.linalg.inv(self.pose)  # [4, 4]
++        return self.ortho @ np.linalg.inv(self.pose)  # [4, 4]
+ 
+     def orbit(self, dx, dy):
+         # rotate along camera up/side axis!
+@@ -214,11 +239,12 @@ class MiniCam:
+         self.camera_center = -torch.tensor(c2w[:3, 3]).cuda()
+ 
+ class BaseCameraController(ABC):
+-    def __init__(self, renderer, cam_size_W, cam_size_H, reference_orbit_camera_fovy, invert_bg_prob=1.0, static_bg=None, device='cuda'):
++    def __init__(self, renderer, cam_size_W, cam_size_H, reference_orbit_camera_fovy, invert_bg_prob=1.0, static_bg=None, device='cuda',
++                 use_perspective=True):
+         self.device = torch.device(device)
+         
+         self.renderer = renderer
+-        self.cam = OrbitCamera(cam_size_W, cam_size_H, fovy=reference_orbit_camera_fovy)
++        self.cam = OrbitCamera(cam_size_W, cam_size_H, fovy=reference_orbit_camera_fovy, use_perspective=use_perspective)
+         
+         self.invert_bg_prob = invert_bg_prob
+         self.black_bg = torch.tensor([0, 0, 0], dtype=torch.float32, device=self.device)
