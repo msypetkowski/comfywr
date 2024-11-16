@@ -440,3 +440,75 @@ def visualize_silhouettes(silhouettes):
         edges = cv2.dilate(mask, np.ones((3, 3))) - cv2.erode(mask, np.ones((3, 3)))
         vis[edges > 0] = col
     return vis
+
+
+class NormalizeMeshBBox:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "input_mesh": ("MESH",),
+                "margin": ("FLOAT", {"default": 0.05, "min": 0, "max": 5.0, "step": 0.01}),
+                "x_min": ("FLOAT", {"default": -1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
+                "x_max": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
+                "y_min": ("FLOAT", {"default": -1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
+                "y_max": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
+                "z_min": ("FLOAT", {"default": -1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
+                "z_max": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
+                "keep_aspect_ratio": ("BOOLEAN", {"default": True}),
+            },
+        }
+
+    RETURN_TYPES = (
+        "MESH",
+    )
+    RETURN_NAMES = (
+        "output_mesh",
+    )
+    FUNCTION = "normalize_mesh"
+    CATEGORY = "comfywr_nodes"
+
+    def normalize_mesh(self, input_mesh, margin, x_min, x_max, y_min, y_max, z_min, z_max, keep_aspect_ratio):
+        """ Normalize input mesh to fit inside given bbox coordinates with a given absolute margin """
+        verts = input_mesh.v.cpu().numpy()  # Nx3 tensor
+
+        mesh_min = verts.min(axis=0)
+        mesh_max = verts.max(axis=0)
+        mesh_center = (mesh_min + mesh_max) / 2
+        mesh_size = mesh_max - mesh_min
+
+        target_size = np.array([
+            (x_max - x_min) - 2 * margin,
+            (y_max - y_min) - 2 * margin,
+            (z_max - z_min) - 2 * margin
+        ])
+
+        if np.any(target_size <= 0):
+            raise ValueError("Target size must be positive after accounting for margin")
+
+        if keep_aspect_ratio:
+            scale_factor = np.min(target_size / mesh_size)
+            scale_factors = np.array([scale_factor, scale_factor, scale_factor])
+        else:
+            scale_factors = target_size / mesh_size
+
+        # Compute target center
+        target_center = np.array([
+            (x_min + x_max) / 2,
+            (y_min + y_max) / 2,
+            (z_min + z_max) / 2
+        ])
+
+        verts = (verts - mesh_center) * scale_factors + target_center
+
+        input_mesh.v[...] = torch.from_numpy(verts)
+
+        # sanity check
+        for i in range(3):
+            assert -1 + margin <= input_mesh.v[:, i].min()
+            assert 1 - margin >= input_mesh.v[:, i].max()
+
+        return (input_mesh, )
