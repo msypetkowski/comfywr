@@ -1,3 +1,136 @@
+diff --git a/Gen_3D_Modules/Unique3D/custum_3d_diffusion/custum_pipeline/unifield_pipeline_img2img.py b/Gen_3D_Modules/Unique3D/custum_3d_diffusion/custum_pipeline/unifield_pipeline_img2img.py
+index 0809ab0..1b651ed 100644
+--- a/Gen_3D_Modules/Unique3D/custum_3d_diffusion/custum_pipeline/unifield_pipeline_img2img.py
++++ b/Gen_3D_Modules/Unique3D/custum_3d_diffusion/custum_pipeline/unifield_pipeline_img2img.py
+@@ -16,11 +16,14 @@
+ 
+ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+ 
++import comfy.utils
+ import numpy as np
++import PIL
+ import torch
+ 
+ from diffusers import AutoencoderKL, UNet2DConditionModel, StableDiffusionImageVariationPipeline
+ from diffusers.schedulers import KarrasDiffusionSchedulers
++from diffusers.utils.torch_utils import randn_tensor
+ from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker, StableDiffusionPipelineOutput
+ from diffusers.models.unets.unet_2d_condition import UNet2DConditionModel
+ from PIL import Image
+@@ -96,10 +99,22 @@ class StableDiffusionImageCustomPipeline(
+ 
+         return image_embeddings
+ 
++    def get_timesteps(self, num_inference_steps, new_steps, denoise):
++        # get the original timestep using init_timestep
++        init_timestep = min(int(num_inference_steps * denoise),
++                            num_inference_steps)
++        if init_timestep == 0:
++            raise ValueError(f"denoise {denoise} is too small.")
++        t_start = max(new_steps - num_inference_steps, 0)
++        timesteps = self.scheduler.timesteps[t_start:]
++
++        return timesteps, new_steps - t_start
++
+     @torch.no_grad()
+     def __call__(
+         self,
+         image: Union[Image.Image, List[Image.Image], torch.FloatTensor],
++        reference_normals: Optional[torch.FloatTensor] = None,
+         height: Optional[int] = 1024,
+         width: Optional[int] = 1024,
+         height_cond: Optional[int] = 512,
+@@ -115,6 +130,7 @@ class StableDiffusionImageCustomPipeline(
+         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
+         callback_steps: int = 1,
+         upper_left_feature: bool = False,
++        denoise: float = 1.0,
+     ):
+         r"""
+         The call function to the pipeline for generation.
+@@ -123,6 +139,8 @@ class StableDiffusionImageCustomPipeline(
+             image (`Image.Image` or `List[Image.Image]` or `torch.FloatTensor`):
+                 Image or images to guide image generation. If you provide a tensor, it needs to be compatible with
+                 [`CLIPImageProcessor`](https://huggingface.co/lambdalabs/sd-image-variations-diffusers/blob/main/feature_extractor/preprocessor_config.json).
++            reference_normals (`torch.FloatTensor`):
++                Normal image to start denoising from
+             height (`int`, *optional*, defaults to `self.unet.config.sample_size * self.vae_scale_factor`):
+                 The height in pixels of the generated image.
+             width (`int`, *optional*, defaults to `self.unet.config.sample_size * self.vae_scale_factor`):
+@@ -156,6 +174,8 @@ class StableDiffusionImageCustomPipeline(
+             callback_steps (`int`, *optional*, defaults to 1):
+                 The frequency at which the `callback` function is called. If not specified, the callback is called at
+                 every step.
++            denoise (`float`, *optional*, defaults to 1.0):
++                Mimic denoise behavior of ComfyUI Ksampler.
+ 
+         Returns:
+             [`~pipelines.stable_diffusion.StableDiffusionPipelineOutput`] or `tuple`:
+@@ -217,8 +237,13 @@ class StableDiffusionImageCustomPipeline(
+         cond_latents = self.encode_latents(image, image_embeddings.device, image_embeddings.dtype, height_cond, width_cond)
+ 
+         # 4. Prepare timesteps
+-        self.scheduler.set_timesteps(num_inference_steps, device=device)
+-        timesteps = self.scheduler.timesteps
++        assert denoise > 0.
++        denoise = 1.0 if reference_normals is None else denoise
++        new_steps = int(num_inference_steps / denoise)
++        self.scheduler.set_timesteps(new_steps, device=device)
++        timesteps, num_inference_steps = self.get_timesteps(
++            num_inference_steps, new_steps, denoise)
++        latent_timestep = timesteps[:1].repeat(batch_size * num_images_per_prompt)
+ 
+         # 5. Prepare latent variables
+         num_channels_latents = self.unet.config.out_channels
+@@ -232,6 +257,15 @@ class StableDiffusionImageCustomPipeline(
+             generator,
+             latents,
+         )
++        # encode reference_normals
++        if reference_normals is not None:
++            reference_normals = reference_normals.permute(0, 3, 1, 2)
++            reference_normals = reference_normals.to(device=device, dtype=image_embeddings.dtype)
++            init_latents = self.vae.encode(reference_normals).latent_dist.sample(generator)
++            init_latents = self.vae.config.scaling_factor * init_latents
++            # add noise
++            noise = randn_tensor(init_latents.shape, generator=generator, device=device, dtype=init_latents.dtype)
++            latents = self.scheduler.add_noise(init_latents, noise, latent_timestep)
+ 
+         # 6. Prepare extra step kwargs.
+         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
+diff --git a/Gen_3D_Modules/Unique3D/scripts/utils.py b/Gen_3D_Modules/Unique3D/scripts/utils.py
+index 4a18a56..b9c1c87 100644
+--- a/Gen_3D_Modules/Unique3D/scripts/utils.py
++++ b/Gen_3D_Modules/Unique3D/scripts/utils.py
+@@ -143,21 +143,24 @@ def rotate_normalmap_by_angle_torch(normal_map, angle):
+                       [-torch.sin(angle), 0, torch.cos(angle)]]).to(normal_map)
+     return torch.matmul(normal_map.view(-1, 3), R.T).view(normal_map.shape)
+ 
+-def do_rotate(rgba_normal, angle):
++def do_rotate(rgba_normal, angle, white_background=False):
+     rgba_normal = torch.from_numpy(rgba_normal).float().cuda() / 255
+     rotated_normal_tensor = rotate_normalmap_by_angle_torch(rgba_normal[..., :3] * 2 - 1, angle)
+     rotated_normal_tensor = (rotated_normal_tensor + 1) / 2
+-    rotated_normal_tensor = rotated_normal_tensor * rgba_normal[:, :, [3]]    # make bg black
++    if white_background is False:
++        rotated_normal_tensor = rotated_normal_tensor * rgba_normal[:, :, [3]]    # make bg black
++    else:
++        rotated_normal_tensor[(rgba_normal[:, :, [3]] == 0).expand(-1, -1, 3)] = 1.   # make bg white
+     rgba_normal_np = torch.cat([rotated_normal_tensor * 255, rgba_normal[:, :, [3]] * 255], dim=-1).cpu().numpy()
+     return rgba_normal_np
+ 
+-def rotate_normals_torch(normal_pils, return_types='np', rotate_direction=1):
++def rotate_normals_torch(normal_pils, return_types='np', rotate_direction=1, white_background=False):
+     n_views = len(normal_pils)
+     ret = []
+     for idx, rgba_normal in enumerate(normal_pils):
+         # rotate normal
+         angle = rotate_direction * idx * (360 / n_views)
+-        rgba_normal_np = do_rotate(np.array(rgba_normal), angle)
++        rgba_normal_np = do_rotate(np.array(rgba_normal), angle, white_background=white_background)
+         if return_types == 'np':
+             ret.append(rgba_normal_np)
+         elif return_types == 'pil':
 diff --git a/MVs_Algorithms/DiffRastMesh/diff_mesh.py b/MVs_Algorithms/DiffRastMesh/diff_mesh.py
 index cb8f314..8a17825 100644
 --- a/MVs_Algorithms/DiffRastMesh/diff_mesh.py
@@ -15,10 +148,35 @@ index cb8f314..8a17825 100644
  
  class DiffMesh:
 diff --git a/nodes.py b/nodes.py
-index 88d7053..a781462 100644
+index 88d7053..aef6bf7 100644
 --- a/nodes.py
 +++ b/nodes.py
-@@ -946,6 +946,7 @@ class Mesh_Orbit_Renderer:
+@@ -545,6 +545,7 @@ class Rotate_Normal_Maps_Horizontally:
+                 "normal_maps": ("IMAGE",),
+                 "normal_masks": ("MASK",),
+                 "clockwise": ("BOOLEAN", {"default": True},),
++                "white_background": ("BOOLEAN", {"default": False},),
+             },
+         }
+         
+@@ -558,11 +559,14 @@ class Rotate_Normal_Maps_Horizontally:
+     FUNCTION = "make_image_grid"
+     CATEGORY = "Comfy3D/Preprocessor"
+     
+-    def make_image_grid(self, normal_maps, normal_masks, clockwise):
++    def make_image_grid(self, normal_maps, normal_masks, clockwise, white_background):
++        rotate_direction = 1 if clockwise is True else -1
+         if normal_maps.shape[0] > 1:
+             from Unique3D.scripts.utils import rotate_normals_torch
+             pil_image_list = torch_imgs_to_pils(normal_maps, normal_masks)
+-            pil_image_list = rotate_normals_torch(pil_image_list, return_types='pil', rotate_direction=int(clockwise))
++            pil_image_list = rotate_normals_torch(pil_image_list, return_types='pil',
++                                                  rotate_direction=rotate_direction,
++                                                  white_background=white_background)
+             normal_maps = pils_to_torch_imgs(pil_image_list, normal_maps.dtype, normal_maps.device)
+         return (normal_maps,)
+     
+@@ -946,6 +950,7 @@ class Mesh_Orbit_Renderer:
                  "render_background_color_g": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
                  "render_background_color_b": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
                  "force_cuda_rasterize": ("BOOLEAN", {"default": False},),
@@ -26,7 +184,7 @@ index 88d7053..a781462 100644
              },
              
              "optional": {
-@@ -985,6 +986,7 @@ class Mesh_Orbit_Renderer:
+@@ -985,6 +990,7 @@ class Mesh_Orbit_Renderer:
          force_cuda_rasterize,
          render_depth=False,
          render_normal=False,
@@ -34,7 +192,7 @@ index 88d7053..a781462 100644
      ):
          
          renderer = DiffRastRenderer(mesh, force_cuda_rasterize)
-@@ -994,13 +996,14 @@ class Mesh_Orbit_Renderer:
+@@ -994,13 +1000,14 @@ class Mesh_Orbit_Renderer:
              optional_render_types.append('depth')
          if render_normal:
              optional_render_types.append('normal')
@@ -52,6 +210,45 @@ index 88d7053..a781462 100644
          )
          
          extra_kwargs = {"optional_render_types": optional_render_types}
+@@ -2819,8 +2826,12 @@ class Unique3D_MVDiffusion_Model:
+                 "num_inference_steps": ("INT", {"default": 30, "min": 1}),
+                 "image_resolution": ([256, 512],),
+                 "radius": ("FLOAT", {"default": 4.0, "min": 0.1, "step": 0.01}),
++                "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                 "preprocess_images":  ("BOOLEAN", {"default": True},),
+             },
++            "optional": {
++                "reference_normals": ("IMAGE",),
++            },
+         }
+     
+     RETURN_TYPES = (
+@@ -2844,7 +2855,9 @@ class Unique3D_MVDiffusion_Model:
+         num_inference_steps,
+         image_resolution,
+         radius,
++        denoise,
+         preprocess_images,
++        reference_normals=None,
+     ):
+         from Unique3D.scripts.utils import simple_image_preprocess
+ 
+@@ -2859,6 +2872,7 @@ class Unique3D_MVDiffusion_Model:
+ 
+         image_pils = unique3d_pipe(
+             image=pil_image_list,
++            reference_normals=reference_normals,
+             generator=generator,
+             guidance_scale=guidance_scale,
+             num_inference_steps=num_inference_steps,
+@@ -2866,6 +2880,7 @@ class Unique3D_MVDiffusion_Model:
+             height=image_resolution,
+             height_cond=image_resolution,
+             width_cond=image_resolution,
++            denoise=denoise,
+         ).images
+ 
+         # [N, H, W, 3]
 diff --git a/shared_utils/camera_utils.py b/shared_utils/camera_utils.py
 index bfe2279..568926f 100644
 --- a/shared_utils/camera_utils.py
