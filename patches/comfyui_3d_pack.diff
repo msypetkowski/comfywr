@@ -1,5 +1,5 @@
 diff --git a/Gen_3D_Modules/Unique3D/custum_3d_diffusion/custum_pipeline/unifield_pipeline_img2img.py b/Gen_3D_Modules/Unique3D/custum_3d_diffusion/custum_pipeline/unifield_pipeline_img2img.py
-index 0809ab0..1b651ed 100644
+index 0809ab0..d7ba295 100644
 --- a/Gen_3D_Modules/Unique3D/custum_3d_diffusion/custum_pipeline/unifield_pipeline_img2img.py
 +++ b/Gen_3D_Modules/Unique3D/custum_3d_diffusion/custum_pipeline/unifield_pipeline_img2img.py
 @@ -16,11 +16,14 @@
@@ -36,7 +36,7 @@ index 0809ab0..1b651ed 100644
      def __call__(
          self,
          image: Union[Image.Image, List[Image.Image], torch.FloatTensor],
-+        reference_normals: Optional[torch.FloatTensor] = None,
++        initial_image: Optional[torch.FloatTensor] = None,
          height: Optional[int] = 1024,
          width: Optional[int] = 1024,
          height_cond: Optional[int] = 512,
@@ -52,7 +52,7 @@ index 0809ab0..1b651ed 100644
              image (`Image.Image` or `List[Image.Image]` or `torch.FloatTensor`):
                  Image or images to guide image generation. If you provide a tensor, it needs to be compatible with
                  [`CLIPImageProcessor`](https://huggingface.co/lambdalabs/sd-image-variations-diffusers/blob/main/feature_extractor/preprocessor_config.json).
-+            reference_normals (`torch.FloatTensor`):
++            initial_image (`torch.FloatTensor`):
 +                Normal image to start denoising from
              height (`int`, *optional*, defaults to `self.unet.config.sample_size * self.vae_scale_factor`):
                  The height in pixels of the generated image.
@@ -73,7 +73,7 @@ index 0809ab0..1b651ed 100644
 -        self.scheduler.set_timesteps(num_inference_steps, device=device)
 -        timesteps = self.scheduler.timesteps
 +        assert denoise > 0.
-+        denoise = 1.0 if reference_normals is None else denoise
++        denoise = 1.0 if initial_image is None else denoise
 +        new_steps = int(num_inference_steps / denoise)
 +        self.scheduler.set_timesteps(new_steps, device=device)
 +        timesteps, num_inference_steps = self.get_timesteps(
@@ -82,15 +82,102 @@ index 0809ab0..1b651ed 100644
  
          # 5. Prepare latent variables
          num_channels_latents = self.unet.config.out_channels
-@@ -232,6 +257,15 @@ class StableDiffusionImageCustomPipeline(
+@@ -232,6 +257,16 @@ class StableDiffusionImageCustomPipeline(
              generator,
              latents,
          )
-+        # encode reference_normals
-+        if reference_normals is not None:
-+            reference_normals = reference_normals.permute(0, 3, 1, 2)
-+            reference_normals = reference_normals.to(device=device, dtype=image_embeddings.dtype)
-+            init_latents = self.vae.encode(reference_normals).latent_dist.sample(generator)
++        # encode initial_image
++        if initial_image is not None:
++            initial_image = initial_image.permute(0, 3, 1, 2)
++            initial_image = initial_image.to(device=device, dtype=image_embeddings.dtype)
++            initial_image = self.image_processor.preprocess(initial_image)
++            init_latents = self.vae.encode(initial_image).latent_dist.sample(generator)
++            init_latents = self.vae.config.scaling_factor * init_latents
++            # add noise
++            noise = randn_tensor(init_latents.shape, generator=generator, device=device, dtype=init_latents.dtype)
++            latents = self.scheduler.add_noise(init_latents, noise, latent_timestep)
+ 
+         # 6. Prepare extra step kwargs.
+         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
+diff --git a/Gen_3D_Modules/Unique3D/custum_3d_diffusion/custum_pipeline/unifield_pipeline_img2mvimg.py b/Gen_3D_Modules/Unique3D/custum_3d_diffusion/custum_pipeline/unifield_pipeline_img2mvimg.py
+index 9babc12..2438ad3 100644
+--- a/Gen_3D_Modules/Unique3D/custum_3d_diffusion/custum_pipeline/unifield_pipeline_img2mvimg.py
++++ b/Gen_3D_Modules/Unique3D/custum_3d_diffusion/custum_pipeline/unifield_pipeline_img2mvimg.py
+@@ -21,6 +21,7 @@ import torch
+ 
+ from diffusers import AutoencoderKL, UNet2DConditionModel, StableDiffusionImageVariationPipeline
+ from diffusers.schedulers import KarrasDiffusionSchedulers, DDPMScheduler
++from diffusers.utils.torch_utils import randn_tensor
+ from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker, StableDiffusionPipelineOutput
+ from diffusers.models.unets.unet_2d_condition import UNet2DConditionModel
+ from PIL import Image
+@@ -96,10 +97,22 @@ class StableDiffusionImage2MVCustomPipeline(
+ 
+         return image_embeddings
+ 
++    def get_timesteps(self, num_inference_steps, new_steps, denoise):
++        # get the original timestep using init_timestep
++        init_timestep = min(int(num_inference_steps * denoise),
++                            num_inference_steps)
++        if init_timestep == 0:
++            raise ValueError(f"denoise {denoise} is too small.")
++        t_start = max(new_steps - num_inference_steps, 0)
++        timesteps = self.scheduler.timesteps[t_start:]
++
++        return timesteps, new_steps - t_start
++
+     @torch.no_grad()
+     def __call__(
+         self,
+         image: Union[Image.Image, List[Image.Image], torch.FloatTensor],
++        initial_image: Optional[torch.FloatTensor] = None,
+         height: Optional[int] = 1024,
+         width: Optional[int] = 1024,
+         height_cond: Optional[int] = 512,
+@@ -114,6 +127,7 @@ class StableDiffusionImage2MVCustomPipeline(
+         return_dict: bool = True,
+         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
+         callback_steps: int = 1,
++        denoise: float = 1.0,
+     ):
+         r"""
+         The call function to the pipeline for generation.
+@@ -122,6 +136,8 @@ class StableDiffusionImage2MVCustomPipeline(
+             image (`Image.Image` or `List[Image.Image]` or `torch.FloatTensor`):
+                 Image or images to guide image generation. If you provide a tensor, it needs to be compatible with
+                 [`CLIPImageProcessor`](https://huggingface.co/lambdalabs/sd-image-variations-diffusers/blob/main/feature_extractor/preprocessor_config.json).
++            initial_image (`torch.FloatTensor`):
++                RGB multi-view image to start denoising from
+             height (`int`, *optional*, defaults to `self.unet.config.sample_size * self.vae_scale_factor`):
+                 The height in pixels of the generated image.
+             width (`int`, *optional*, defaults to `self.unet.config.sample_size * self.vae_scale_factor`):
+@@ -221,8 +237,13 @@ class StableDiffusionImage2MVCustomPipeline(
+             image_pixels = torch.cat([torch.zeros_like(image_pixels), image_pixels], dim=0)
+ 
+         # 4. Prepare timesteps
+-        self.scheduler.set_timesteps(num_inference_steps, device=device)
+-        timesteps = self.scheduler.timesteps
++        assert denoise > 0.
++        denoise = 1.0 if initial_image is None else denoise
++        new_steps = int(num_inference_steps / denoise)
++        self.scheduler.set_timesteps(new_steps, device=device)
++        timesteps, num_inference_steps = self.get_timesteps(
++            num_inference_steps, new_steps, denoise)
++        latent_timestep = timesteps[:1].repeat(batch_size * num_images_per_prompt)
+ 
+         # 5. Prepare latent variables
+         num_channels_latents = self.unet.config.out_channels
+@@ -236,7 +257,16 @@ class StableDiffusionImage2MVCustomPipeline(
+             generator,
+             latents,
+         )
+-
++        # encode initial_image
++        if initial_image is not None:
++            initial_image = initial_image.permute(0, 3, 1, 2)
++            initial_image = initial_image.to(device=device, dtype=image_embeddings.dtype)
++            initial_image = self.image_processor.preprocess(initial_image)
++            init_latents = self.vae.encode(initial_image).latent_dist.sample(generator)
 +            init_latents = self.vae.config.scaling_factor * init_latents
 +            # add noise
 +            noise = randn_tensor(init_latents.shape, generator=generator, device=device, dtype=init_latents.dtype)
@@ -148,7 +235,7 @@ index cb8f314..8a17825 100644
  
  class DiffMesh:
 diff --git a/nodes.py b/nodes.py
-index 88d7053..aef6bf7 100644
+index 88d7053..3226f2e 100644
 --- a/nodes.py
 +++ b/nodes.py
 @@ -545,6 +545,7 @@ class Rotate_Normal_Maps_Horizontally:
@@ -218,7 +305,7 @@ index 88d7053..aef6bf7 100644
                  "preprocess_images":  ("BOOLEAN", {"default": True},),
              },
 +            "optional": {
-+                "reference_normals": ("IMAGE",),
++                "initial_image": ("IMAGE",),
 +            },
          }
      
@@ -229,7 +316,7 @@ index 88d7053..aef6bf7 100644
          radius,
 +        denoise,
          preprocess_images,
-+        reference_normals=None,
++        initial_image=None,
      ):
          from Unique3D.scripts.utils import simple_image_preprocess
  
@@ -237,7 +324,7 @@ index 88d7053..aef6bf7 100644
  
          image_pils = unique3d_pipe(
              image=pil_image_list,
-+            reference_normals=reference_normals,
++            initial_image=initial_image,
              generator=generator,
              guidance_scale=guidance_scale,
              num_inference_steps=num_inference_steps,
