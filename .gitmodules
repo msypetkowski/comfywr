@@ -82,3 +82,9 @@
 [submodule "custom_nodes/x_flux_comfyui"]
 	path = custom_nodes/x_flux_comfyui
 	url = https://github.com/XLabs-AI/x-flux-comfyui.git
+[submodule "custom_nodes/ComfyUI_JPS-Nodes"]
+	path = custom_nodes/ComfyUI_JPS-Nodes
+	url = https://github.com/JPS-GER/ComfyUI_JPS-Nodes.git
+[submodule "custom_nodes/rgthree-comfy"]
+	path = custom_nodes/rgthree-comfy
+	url = https://github.com/rgthree/rgthree-comfy.git
