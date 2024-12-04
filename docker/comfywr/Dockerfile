@@ -94,7 +94,7 @@ COPY custom_nodes/eden_comfy_pipelines/requirements.txt .
 RUN pip install -r requirements.txt
 COPY custom_nodes/efficiency-nodes-comfyui/requirements.txt .
 RUN pip install -r requirements.txt
-COPY custom_nodes/rgthree-comfy/requirements.txt
+COPY custom_nodes/rgthree-comfy/requirements.txt .
 RUN pip install -r requirements.txt
 
 # other packages (not listed in requirements.txt files in some submodules, but needed)
