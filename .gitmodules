@@ -88,3 +88,6 @@
 [submodule "custom_nodes/rgthree-comfy"]
 	path = custom_nodes/rgthree-comfy
 	url = https://github.com/rgthree/rgthree-comfy.git
+[submodule "custom_nodes/ComfyUI-MVAdapter"]
+	path = custom_nodes/ComfyUI-MVAdapter
+	url = https://github.com/huanngzh/ComfyUI-MVAdapter.git
