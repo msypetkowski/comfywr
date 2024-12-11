@@ -46,10 +46,10 @@ def load_ipadapter(chkp_path):
 
 @torch.no_grad()
 def ip_adapter_apply(ipadapter, model, weight, clip_vision,
-                     image, start_at=0.0, end_at=1.0, weight_type='strong_style_transfer'):
+                     image, start_at=0.0, end_at=1.0, weight_type='strong style transfer', combine_embeds='concat'):
     ret = IPAdapterAdvanced().apply_ipadapter(ipadapter=ipadapter, model=model, weight=weight, clip_vision=clip_vision,
                                               image=image, start_at=start_at, end_at=end_at,
-                                              weight_type=weight_type)
+                                              weight_type=weight_type, combine_embeds=combine_embeds)
     assert isinstance(ret, tuple)
     ret, _ = ret
     return ret
@@ -122,7 +122,7 @@ def cn_preprocess(imgs, preprocess_alg, **kwargs):
     elif preprocess_alg == 'leres_depth':
         estimated, = LERES_Depth_Map_Preprocessor().execute(imgs, 0, 0, resolution=res)
     elif preprocess_alg == 'canny':
-        estimated, = Canny_Edge_Preprocessor().execute(imgs, 30, 50, 'disable', resolution=res)
+        estimated, = Canny_Edge_Preprocessor().execute(imgs, 30, 50, resolution=res)
     elif preprocess_alg == 'mediapipe_face':
         estimated, = Media_Pipe_Face_Mesh_Preprocessor().detect(imgs, 2, 100, resolution=res)
     else:
@@ -291,7 +291,7 @@ def sample_flux(model, positive, negative, seed=7, steps=20, timestep_to_start_c
 
 @torch.no_grad()
 def sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise=1.0,
-           batch_index=None, cn=None):
+           batch_index=None, cn=None, control_apply_to_uncond=True):
     if batch_index is None:
         batch_index = [0] * latent_image['samples'].shape[0]
 
@@ -303,7 +303,7 @@ def sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,
             # assert not c[1]
     if cn is not None:
         condition_kwargs = positive[0][1]
-        condition_kwargs.update({'control': cn, 'control_apply_to_uncond': True})
+        condition_kwargs.update({'control': cn, 'control_apply_to_uncond': control_apply_to_uncond})
         positive = [[positive[0][0], condition_kwargs]]
     latents, = common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,
                                dict(samples=latent_image['samples'], batch_index=batch_index),
