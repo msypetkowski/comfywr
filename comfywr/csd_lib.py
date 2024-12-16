@@ -92,13 +92,13 @@ def ip_adapter_apply_flux(model, ipadapter, image, begin_strength, end_strength,
 
 
 @torch.no_grad()
-def control_net_set_create(checkpoint, initial_hint_image, strength, start_percent=0, end_percent=1):
+def control_net_set_create(checkpoint, initial_hint_image, strength, start_percent=0, end_percent=1, **kwargs):
     control_hint = initial_hint_image.movedim(-1, 1)
     return checkpoint.copy().set_cond_hint(control_hint, strength, (start_percent, end_percent))
 
 
 @torch.no_grad()
-def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength, start_percent=0, end_percent=1):
+def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength, start_percent=0, end_percent=1, **kwargs):
     control_hint = hint_image.movedim(-1, 1)
     new_c_net = c_net.copy().set_cond_hint(control_hint, strength, (start_percent, end_percent))
     new_c_net.set_previous_controlnet(c_net_set)
@@ -107,7 +107,7 @@ def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength, start_per
 
 @torch.no_grad()
 def cn_preprocess(imgs, preprocess_alg, **kwargs):
-    # TODO: maybe consider selectin resolution differently
+    # TODO: maybe consider selecting resolution differently
     res = min(imgs.shape[1], imgs.shape[2])
     if preprocess_alg == 'openpose':
         estimated, = OpenPose_Preprocessor().estimate_pose(imgs, *['enable'] * 3, 'v1.1', resolution=res)
@@ -122,7 +122,10 @@ def cn_preprocess(imgs, preprocess_alg, **kwargs):
     elif preprocess_alg == 'leres_depth':
         estimated, = LERES_Depth_Map_Preprocessor().execute(imgs, 0, 0, resolution=res)
     elif preprocess_alg == 'canny':
-        estimated, = Canny_Edge_Preprocessor().execute(imgs, 30, 50, resolution=res)
+        estimated, = Canny_Edge_Preprocessor().execute(imgs,
+                                                       low_threshold=kwargs.get('low_threshold', 30),
+                                                       high_threshold=kwargs.get('high_threshold', 50),
+                                                       resolution=kwargs.get('resolution', res))
     elif preprocess_alg == 'mediapipe_face':
         estimated, = Media_Pipe_Face_Mesh_Preprocessor().detect(imgs, 2, 100, resolution=res)
     else:
