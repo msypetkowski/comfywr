@@ -9,8 +9,8 @@ Setup environment
 
 Fetch submodules, apply patches, build image, run jupyterlab:
 ```bash
-git submodule update --init --recursive
-./tools/apply_patches.sh
+GIT_LFS_SKIP_SMUDGE=1 git submodule update --init --recursive
+GIT_LFS_SKIP_SMUDGE=1 ./tools/apply_patches.sh
 ./tools/build_docker.sh
 
 # download some basic checkpoints
