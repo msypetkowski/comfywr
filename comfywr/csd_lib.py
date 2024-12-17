@@ -46,10 +46,10 @@ def load_ipadapter(chkp_path):
 
 @torch.no_grad()
 def ip_adapter_apply(ipadapter, model, weight, clip_vision,
-                     image, start_at=0.0, end_at=1.0, weight_type='strong_style_transfer'):
+                     image, start_at=0.0, end_at=1.0, weight_type='strong style transfer', combine_embeds='concat'):
     ret = IPAdapterAdvanced().apply_ipadapter(ipadapter=ipadapter, model=model, weight=weight, clip_vision=clip_vision,
                                               image=image, start_at=start_at, end_at=end_at,
-                                              weight_type=weight_type)
+                                              weight_type=weight_type, combine_embeds=combine_embeds)
     assert isinstance(ret, tuple)
     ret, _ = ret
     return ret
@@ -92,13 +92,13 @@ def ip_adapter_apply_flux(model, ipadapter, image, begin_strength, end_strength,
 
 
 @torch.no_grad()
-def control_net_set_create(checkpoint, initial_hint_image, strength, start_percent=0, end_percent=1):
+def control_net_set_create(checkpoint, initial_hint_image, strength, start_percent=0, end_percent=1, **kwargs):
     control_hint = initial_hint_image.movedim(-1, 1)
     return checkpoint.copy().set_cond_hint(control_hint, strength, (start_percent, end_percent))
 
 
 @torch.no_grad()
-def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength, start_percent=0, end_percent=1):
+def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength, start_percent=0, end_percent=1, **kwargs):
     control_hint = hint_image.movedim(-1, 1)
     new_c_net = c_net.copy().set_cond_hint(control_hint, strength, (start_percent, end_percent))
     new_c_net.set_previous_controlnet(c_net_set)
@@ -107,7 +107,7 @@ def control_net_set_apply_hint(c_net, c_net_set, hint_image, strength, start_per
 
 @torch.no_grad()
 def cn_preprocess(imgs, preprocess_alg, **kwargs):
-    # TODO: maybe consider selectin resolution differently
+    # TODO: maybe consider selecting resolution differently
     res = min(imgs.shape[1], imgs.shape[2])
     if preprocess_alg == 'openpose':
         estimated, = OpenPose_Preprocessor().estimate_pose(imgs, *['enable'] * 3, 'v1.1', resolution=res)
@@ -122,7 +122,10 @@ def cn_preprocess(imgs, preprocess_alg, **kwargs):
     elif preprocess_alg == 'leres_depth':
         estimated, = LERES_Depth_Map_Preprocessor().execute(imgs, 0, 0, resolution=res)
     elif preprocess_alg == 'canny':
-        estimated, = Canny_Edge_Preprocessor().execute(imgs, 30, 50, 'disable', resolution=res)
+        estimated, = Canny_Edge_Preprocessor().execute(imgs,
+                                                       low_threshold=kwargs.get('low_threshold', 30),
+                                                       high_threshold=kwargs.get('high_threshold', 50),
+                                                       resolution=kwargs.get('resolution', res))
     elif preprocess_alg == 'mediapipe_face':
         estimated, = Media_Pipe_Face_Mesh_Preprocessor().detect(imgs, 2, 100, resolution=res)
     else:
@@ -291,7 +294,7 @@ def sample_flux(model, positive, negative, seed=7, steps=20, timestep_to_start_c
 
 @torch.no_grad()
 def sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise=1.0,
-           batch_index=None, cn=None):
+           batch_index=None, cn=None, control_apply_to_uncond=True):
     if batch_index is None:
         batch_index = [0] * latent_image['samples'].shape[0]
 
@@ -303,7 +306,7 @@ def sample(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,
             # assert not c[1]
     if cn is not None:
         condition_kwargs = positive[0][1]
-        condition_kwargs.update({'control': cn, 'control_apply_to_uncond': True})
+        condition_kwargs.update({'control': cn, 'control_apply_to_uncond': control_apply_to_uncond})
         positive = [[positive[0][0], condition_kwargs]]
     latents, = common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, positive, negative,
                                dict(samples=latent_image['samples'], batch_index=batch_index),
