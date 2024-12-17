@@ -3,11 +3,9 @@
 # popd
 
 pushd custom_nodes/ComfyUI-3D-Pack/
-git stash
-git apply ../../patches/comfyui_3d_pack.diff
+git diff > ../../patches/comfyui_3d_pack.diff
 popd
 
 pushd custom_nodes/ComfyUI-ModelUnloader//
-git stash
-git apply ../../patches/model_unloader.diff
+git diff ../../patches/model_unloader.diff
 popd

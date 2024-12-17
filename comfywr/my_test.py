@@ -228,8 +228,9 @@ def hq_infer(checkpoints, initial_w, initial_h, batch_size, conditions, neg_cond
         if use_upscaler:
             decoded = vae_decode(checkpoints['vae'], small_latents)
             upscaled = image_upscale_w_model(checkpoints['upscale_model'], decoded)
-            # TODO: * 2 is arbitrary0
-            upscaled = image_scale(upscaled, int(initial_w * upscale_by * 2), int(initial_h * upscale_by * 2))
+            w = round(initial_w * upscale_by / 8) * 8
+            h = round(initial_h * upscale_by / 8) * 8
+            upscaled = image_scale(upscaled, w, h)
             big_latents = vae_encode(checkpoints['vae'], upscaled)
         else:
             big_latents = upscale_latent_by(small_latents, upscale_by)
