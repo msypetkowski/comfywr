@@ -235,10 +235,10 @@ index cb8f314..8a17825 100644
  
  class DiffMesh:
 diff --git a/nodes.py b/nodes.py
-index 88d7053..3226f2e 100644
+index aaf9b45..64ccc3a 100644
 --- a/nodes.py
 +++ b/nodes.py
-@@ -545,6 +545,7 @@ class Rotate_Normal_Maps_Horizontally:
+@@ -549,6 +549,7 @@ class Rotate_Normal_Maps_Horizontally:
                  "normal_maps": ("IMAGE",),
                  "normal_masks": ("MASK",),
                  "clockwise": ("BOOLEAN", {"default": True},),
@@ -246,24 +246,23 @@ index 88d7053..3226f2e 100644
              },
          }
          
-@@ -558,11 +559,14 @@ class Rotate_Normal_Maps_Horizontally:
+@@ -562,12 +563,13 @@ class Rotate_Normal_Maps_Horizontally:
      FUNCTION = "make_image_grid"
      CATEGORY = "Comfy3D/Preprocessor"
      
 -    def make_image_grid(self, normal_maps, normal_masks, clockwise):
 +    def make_image_grid(self, normal_maps, normal_masks, clockwise, white_background):
-+        rotate_direction = 1 if clockwise is True else -1
+         rotate_direction = 1 if clockwise is True else -1
          if normal_maps.shape[0] > 1:
              from Unique3D.scripts.utils import rotate_normals_torch
              pil_image_list = torch_imgs_to_pils(normal_maps, normal_masks)
--            pil_image_list = rotate_normals_torch(pil_image_list, return_types='pil', rotate_direction=int(clockwise))
-+            pil_image_list = rotate_normals_torch(pil_image_list, return_types='pil',
-+                                                  rotate_direction=rotate_direction,
+-            pil_image_list = rotate_normals_torch(pil_image_list, return_types='pil', rotate_direction=rotate_direction)
++            pil_image_list = rotate_normals_torch(pil_image_list, return_types='pil', rotate_direction=rotate_direction,
 +                                                  white_background=white_background)
              normal_maps = pils_to_torch_imgs(pil_image_list, normal_maps.dtype, normal_maps.device)
          return (normal_maps,)
      
-@@ -946,6 +950,7 @@ class Mesh_Orbit_Renderer:
+@@ -951,6 +953,7 @@ class Mesh_Orbit_Renderer:
                  "render_background_color_g": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
                  "render_background_color_b": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.001}),
                  "force_cuda_rasterize": ("BOOLEAN", {"default": False},),
@@ -271,7 +270,7 @@ index 88d7053..3226f2e 100644
              },
              
              "optional": {
-@@ -985,6 +990,7 @@ class Mesh_Orbit_Renderer:
+@@ -990,6 +993,7 @@ class Mesh_Orbit_Renderer:
          force_cuda_rasterize,
          render_depth=False,
          render_normal=False,
@@ -279,7 +278,7 @@ index 88d7053..3226f2e 100644
      ):
          
          renderer = DiffRastRenderer(mesh, force_cuda_rasterize)
-@@ -994,13 +1000,14 @@ class Mesh_Orbit_Renderer:
+@@ -999,13 +1003,14 @@ class Mesh_Orbit_Renderer:
              optional_render_types.append('depth')
          if render_normal:
              optional_render_types.append('normal')
@@ -297,7 +296,7 @@ index 88d7053..3226f2e 100644
          )
          
          extra_kwargs = {"optional_render_types": optional_render_types}
-@@ -2819,8 +2826,12 @@ class Unique3D_MVDiffusion_Model:
+@@ -2824,8 +2829,12 @@ class Unique3D_MVDiffusion_Model:
                  "num_inference_steps": ("INT", {"default": 30, "min": 1}),
                  "image_resolution": ([256, 512],),
                  "radius": ("FLOAT", {"default": 4.0, "min": 0.1, "step": 0.01}),
@@ -310,7 +309,7 @@ index 88d7053..3226f2e 100644
          }
      
      RETURN_TYPES = (
-@@ -2844,7 +2855,9 @@ class Unique3D_MVDiffusion_Model:
+@@ -2849,7 +2858,9 @@ class Unique3D_MVDiffusion_Model:
          num_inference_steps,
          image_resolution,
          radius,
@@ -320,7 +319,7 @@ index 88d7053..3226f2e 100644
      ):
          from Unique3D.scripts.utils import simple_image_preprocess
  
-@@ -2859,6 +2872,7 @@ class Unique3D_MVDiffusion_Model:
+@@ -2864,6 +2875,7 @@ class Unique3D_MVDiffusion_Model:
  
          image_pils = unique3d_pipe(
              image=pil_image_list,
@@ -328,7 +327,7 @@ index 88d7053..3226f2e 100644
              generator=generator,
              guidance_scale=guidance_scale,
              num_inference_steps=num_inference_steps,
-@@ -2866,6 +2880,7 @@ class Unique3D_MVDiffusion_Model:
+@@ -2871,6 +2883,7 @@ class Unique3D_MVDiffusion_Model:
              height=image_resolution,
              height_cond=image_resolution,
              width_cond=image_resolution,
