@@ -1,6 +1,7 @@
 ARG CUDA_VERSION=12.1.0-devel
+ARG BUILDPLATFORM=linux/amd64
 
-FROM --platform=amd64 docker.io/nvidia/cuda:${CUDA_VERSION}-ubuntu22.04
+FROM --platform=${BUILDPLATFORM} docker.io/nvidia/cuda:${CUDA_VERSION}-ubuntu22.04 AS base
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
@@ -47,16 +48,16 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # for GLEW
-ENV LD_LIBRARY_PATH /usr/lib64:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH
 ENV LIBGL_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
 ENV LIBGL_DEBUG=verbose
 
 # nvidia-container-runtime
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,graphics
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
 
 # Default pyopengl to EGL for good headless rendering support
-ENV PYOPENGL_PLATFORM egl
+ENV PYOPENGL_PLATFORM=egl
 RUN mkdir -p /usr/share/glvnd/egl_vendor.d && \
     echo '{ \
     "file_format_version" : "1.0.0", \
@@ -121,7 +122,7 @@ COPY custom_nodes/ComfyUI-3D-Pack/_Pre_Builds/ ./_Pre_Builds
 COPY custom_nodes/ComfyUI-3D-Pack/shared_utils/ ./shared_utils
 ENV CUDA_HOME=/usr/local/cuda
 ENV PATH=$CUDA_HOME/bin:$PATH
-ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+# ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 ENV TORCH_CUDA_ARCH_LIST="8.0 8.6 8.9+PTX"
 # RUN python install.py
 

@@ -1,3 +1,4 @@
+set -e
 
 # Variables for container and image names
 BASE_IMAGE="comfywr_intermediate:latest"
