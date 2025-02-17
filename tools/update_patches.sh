@@ -7,5 +7,9 @@ git diff > ../../patches/comfyui_3d_pack.diff
 popd
 
 pushd custom_nodes/ComfyUI-ModelUnloader//
-git diff ../../patches/model_unloader.diff
+git diff > ../../patches/model_unloader.diff
+popd
+
+pushd custom_nodes/comfyui_marigold/
+git diff > ../../patches/marigold.diff
 popd
