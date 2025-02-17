@@ -1,0 +1,50 @@
+diff --git a/nodes_v2.py b/nodes_v2.py
+index b7ff4c0..2acaefd 100644
+--- a/nodes_v2.py
++++ b/nodes_v2.py
+@@ -8,7 +8,7 @@ from diffusers.schedulers import (
+     )
+ 
+ import comfy.utils
+-import model_management 
++import model_management
+ import folder_paths
+ 
+ class MarigoldModelLoader:
+@@ -28,8 +28,11 @@ class MarigoldModelLoader:
+                "default": 'marigold-lcm-v1-0'
+             }),
+             },
++            "optional": {
++                "custom_unet_path": ("STRING", {"default": None}),
+             }
+-    
++            }
++
+     RETURN_TYPES = ("MARIGOLDMODEL",)
+     RETURN_NAMES =("marigold_model",)
+     FUNCTION = "load"
+@@ -43,10 +46,10 @@ Models are automatically downloaded to
+ ComfyUI/models/diffusers -folder
+ """
+ 
+-    def load(self, model):
++    def load(self, model, custom_unet_path):
+         try:
+             
+-            from diffusers import MarigoldDepthPipeline, MarigoldNormalsPipeline
++            from diffusers import MarigoldDepthPipeline, MarigoldNormalsPipeline, UNet2DConditionModel
+         except:
+             raise Exception("diffusers>=0.28 is required for v2 nodes")
+         
+@@ -82,6 +85,10 @@ ComfyUI/models/diffusers -folder
+             variant=variant, 
+             torch_dtype=torch.float16).to(device)
+ 
++        if custom_unet_path is not None and custom_unet_path.strip():
++            self.marigold_pipeline.unet = UNet2DConditionModel.from_pretrained(custom_unet_path,
++                                                                               torch_dtype=torch.float16)
++
+         marigold_model = {
+             "pipeline": self.marigold_pipeline,
+             "modeltype": modeltype
