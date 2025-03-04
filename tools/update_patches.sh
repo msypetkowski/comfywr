@@ -1,6 +1,6 @@
-# pushd ComfyUI/
-# git apply ../patches/cui.patch
-# popd
+pushd ComfyUI/
+git diff > ../patches/comfyui.diff
+popd
 
 pushd custom_nodes/ComfyUI-3D-Pack/
 git diff > ../../patches/comfyui_3d_pack.diff
