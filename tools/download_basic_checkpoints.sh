@@ -7,7 +7,20 @@ mkdir -p downloaded_models/vae/
 mkdir -p downloaded_models/lgm/
 mkdir -p downloaded_models/ipadapter/
 mkdir -p downloaded_models/clip_vision/
+mkdir -p downloaded_models/clip/
+mkdir -p downloaded_models/unet/
 cd downloaded_models
+
+pushd unet/
+wget -nc https://huggingface.co/city96/Wan2.1-I2V-14B-480P-gguf/resolve/main/wan2.1-i2v-14b-480p-Q8_0.gguf
+wget -nc https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/diffusion_models/wan2.1_i2v_480p_14B_fp8_scaled.safetensors
+wget -nc https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/diffusion_models/wan2.1_i2v_720p_14B_bf16.safetensors
+popd
+
+pushd clip
+wget -nc https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp16.safetensors
+wget -nc https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors
+popd
 
 pushd checkpoints/
 wget -nc https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors
@@ -56,6 +69,7 @@ wget -nc https://civitai.com/api/download/models/501823?type=Model&format=SafeTe
 popd
 
 pushd vae/
+wget -nc https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors
 # wget -nc https://huggingface.co/stabilityai/sd-vae-ft-mse-original/resolve/main/vae-ft-mse-840000-ema-pruned.safetensors
 wget -nc https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors
 popd
@@ -101,6 +115,7 @@ popd
 
 
 pushd clip_vision/
+wget -nc https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors
 wget -nc https://huggingface.co/openai/clip-vit-large-patch14/resolve/main/pytorch_model.bin -O clip-vit-large-patch14.bin
 
 wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder/model.safetensors \

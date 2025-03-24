@@ -32,3 +32,6 @@ do_one main x_flux_comfyui/
 do_one main rgthree-comfy/
 do_one main ComfyUI-KJNodes/
 do_one main ComfyUI-MVAdapter/
+do_one main ComfyUI-GGUF/
+do_one main ComfyUI_TiledKSampler/
+do_one main ComfyUI-WanVideoWrapper/

@@ -91,3 +91,12 @@
 [submodule "custom_nodes/ComfyUI-MVAdapter"]
 	path = custom_nodes/ComfyUI-MVAdapter
 	url = https://github.com/huanngzh/ComfyUI-MVAdapter.git
+[submodule "custom_nodes/ComfyUI-GGUF"]
+	path = custom_nodes/ComfyUI-GGUF
+	url = https://github.com/city96/ComfyUI-GGUF.git
+[submodule "custom_nodes/ComfyUI-WanVideoWrapper"]
+	path = custom_nodes/ComfyUI-WanVideoWrapper
+	url = https://github.com/kijai/ComfyUI-WanVideoWrapper.git
+[submodule "custom_nodes/ComfyUI_TiledKSampler"]
+	path = custom_nodes/ComfyUI_TiledKSampler
+	url = https://github.com/BlenderNeko/ComfyUI_TiledKSampler
