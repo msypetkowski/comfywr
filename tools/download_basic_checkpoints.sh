@@ -18,6 +18,9 @@ wget -nc https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaper_8_pru
 # wget -nc https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors
 wget -nc https://civitai.com/api/download/models/490254 -O ZavyChromaXL_v7.0.safetensors
 wget -nc https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors
+
+wget -nc https://civitai.com/api/download/models/782002 -O juggernautXL_juggXIByRundiffusion.safetensors
+wget -nc https://civitai.com/api/download/models/456538 -O juggernautXL_versionXInpaint.safetensors
 popd
 
 pushd controlnet/
@@ -30,6 +33,7 @@ wget -nc https://huggingface.co/spaces/Wuvin/Unique3D/resolve/main/ckpt/controln
 wget -nc https://huggingface.co/hr16/ControlNet-HandRefiner-pruned/resolve/main/control_sd15_inpaint_depth_hand_fp16.safetensors
 # wget -nc https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_openpose_fp16.safetensors
 # wget -nc https://huggingface.co/lllyasviel/control_v11p_sd15_openpose/resolve/main/diffusion_pytorch_model.fp16.safetensors -O control_v11p_sd15_openpose_fp16.safetensors
+wget https://huggingface.co/xinsir/controlnet-canny-sdxl-1.0/resolve/main/diffusion_pytorch_model_V2.safetensors -O controlnet-canny-sdxl-1.0.safetensors
 popd
 
 pushd embeddings/
@@ -115,3 +119,4 @@ popd
 # wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/ccm-diffusion.pth
 # wget -nc https://huggingface.co/Zhengyi/CRM/resolve/main/CRM.pth
 # popd
+
