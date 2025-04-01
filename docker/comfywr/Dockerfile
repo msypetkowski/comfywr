@@ -117,20 +117,19 @@ RUN pip install -r requirements.txt
 RUN wget https://github.com/JotJunior/PHP-Boleto-ZF2/raw/master/public/assets/fonts/arial.ttf
 RUN mv arial.ttf /usr/share/fonts/
 
-# 3D pack (complex dependencies)
-COPY custom_nodes/ComfyUI-3D-Pack/requirements.txt .
-RUN pip install -r requirements.txt
-RUN pip install ninja rembg[gpu] open_clip_torch
-WORKDIR /install_dir/
-COPY custom_nodes/ComfyUI-3D-Pack/install.py .
-COPY custom_nodes/ComfyUI-3D-Pack/_Pre_Builds/ ./_Pre_Builds
-COPY custom_nodes/ComfyUI-3D-Pack/shared_utils/ ./shared_utils
-ENV CUDA_HOME=/usr/local/cuda
-ENV PATH=$CUDA_HOME/bin:$PATH
-# ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
-ENV TORCH_CUDA_ARCH_LIST="8.0 8.6 8.9+PTX"
-# RUN python install.py
+# # 3D pack (complex dependencies)
+# COPY custom_nodes/ComfyUI-3D-Pack/requirements.txt .
+# RUN pip install -r requirements.txt
+# RUN pip install ninja rembg[gpu] open_clip_torch
+# WORKDIR /install_dir/
+# COPY custom_nodes/ComfyUI-3D-Pack/install.py .
+# COPY custom_nodes/ComfyUI-3D-Pack/_Pre_Builds/ ./_Pre_Builds
+# COPY custom_nodes/ComfyUI-3D-Pack/shared_utils/ ./shared_utils
+# ENV CUDA_HOME=/usr/local/cuda
+# ENV PATH=$CUDA_HOME/bin:$PATH
+# # ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+# ENV TORCH_CUDA_ARCH_LIST="8.0 8.6 8.9+PTX"
+# # RUN python install.py
 
 WORKDIR /workdir/ComfyUI/
-
-ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
+# ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
