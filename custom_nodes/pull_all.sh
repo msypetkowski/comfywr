@@ -32,3 +32,4 @@ do_one main x_flux_comfyui/
 do_one main rgthree-comfy/
 do_one main ComfyUI-KJNodes/
 do_one main ComfyUI-MVAdapter/
+do_one master ComfyUI-Hi3DGen/
