@@ -99,6 +99,8 @@ COPY custom_nodes/rgthree-comfy/requirements.txt .
 RUN pip install -r requirements.txt
 COPY custom_nodes/ComfyUI-MVAdapter/requirements.txt .
 RUN pip install -r requirements.txt
+COPY custom_nodes/ComfyUI-Hi3DGen/requirements.txt .
+RUN pip install -r requirements.txt
 
 # other packages (not listed in requirements.txt files in some submodules, but needed)
 RUN pip install ultralytics==8.2.1
@@ -127,5 +129,8 @@ ENV TORCH_CUDA_ARCH_LIST="8.0 8.6 8.9+PTX"
 # RUN python install.py
 
 WORKDIR /workdir/ComfyUI/
+
+
+RUN pip install kaolin==0.17.0 -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.4.0_cu121.html
 
 ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/

@@ -91,3 +91,6 @@
 [submodule "custom_nodes/ComfyUI-MVAdapter"]
 	path = custom_nodes/ComfyUI-MVAdapter
 	url = https://github.com/huanngzh/ComfyUI-MVAdapter.git
+[submodule "custom_nodes/ComfyUI-Hi3DGen"]
+	path = custom_nodes/ComfyUI-Hi3DGen
+	url = https://github.com/Stable-X/ComfyUI-Hi3DGen.git
