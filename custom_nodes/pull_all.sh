@@ -33,5 +33,5 @@ do_one main rgthree-comfy/
 do_one main ComfyUI-KJNodes/
 do_one main ComfyUI-MVAdapter/
 do_one main ComfyUI-GGUF/
-do_one main ComfyUI_TiledKSampler/
+do_one master ComfyUI_TiledKSampler/
 do_one main ComfyUI-WanVideoWrapper/
