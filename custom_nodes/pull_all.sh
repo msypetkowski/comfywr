@@ -35,3 +35,9 @@ do_one main ComfyUI-MVAdapter/
 do_one main ComfyUI-GGUF/
 do_one master ComfyUI_TiledKSampler/
 do_one main ComfyUI-WanVideoWrapper/
+do_one master style_aligned_comfy/
+do_one main Comfyui-In-Context-Lora-Utils/
+do_one main Comfyui_Object_Migration/
+do_one main ComfyUI-Easy-Use/
+do_one main ComfyUI-segment-anything-2/
+do_one main ComfyUI-Manager/

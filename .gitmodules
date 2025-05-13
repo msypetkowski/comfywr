@@ -97,3 +97,21 @@
 [submodule "custom_nodes/ComfyUI_TiledKSampler"]
 	path = custom_nodes/ComfyUI_TiledKSampler
 	url = https://github.com/BlenderNeko/ComfyUI_TiledKSampler
+[submodule "custom_nodes/style_aligned_comfy"]
+	path = custom_nodes/style_aligned_comfy
+	url = https://github.com/brianfitzgerald/style_aligned_comfy.git
+[submodule "custom_nodes/Comfyui-In-Context-Lora-Utils"]
+	path = custom_nodes/Comfyui-In-Context-Lora-Utils
+	url = https://github.com/lrzjason/Comfyui-In-Context-Lora-Utils.git
+[submodule "custom_nodes/Comfyui_Object_Migration"]
+	path = custom_nodes/Comfyui_Object_Migration
+	url = https://github.com/TTPlanetPig/Comfyui_Object_Migration.git
+[submodule "custom_nodes/ComfyUI-Easy-Use"]
+	path = custom_nodes/ComfyUI-Easy-Use
+	url = https://github.com/yolain/ComfyUI-Easy-Use.git
+[submodule "custom_nodes/ComfyUI-segment-anything-2"]
+	path = custom_nodes/ComfyUI-segment-anything-2
+	url = https://github.com/kijai/ComfyUI-segment-anything-2.git
+[submodule "custom_nodes/ComfyUI-Manager"]
+	path = custom_nodes/ComfyUI-Manager
+	url = https://github.com/Comfy-Org/ComfyUI-Manager.git
