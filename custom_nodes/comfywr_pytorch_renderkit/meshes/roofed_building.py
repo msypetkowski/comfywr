@@ -1,0 +1,96 @@
+from .parametric_mesh import ParametricMesh
+from.cuboid import Cuboid
+from ..transforms.transform import Transform
+import torch
+import torch.nn as nn
+import trimesh
+
+from typing import Tuple
+
+
+class RoofedBuilding(ParametricMesh):
+    _signs = torch.tensor([
+        # bottom (-y)
+        [-1, -1, -1], [ 1, -1, -1], [ 1, -1,  1], [-1, -1,  1],
+        # back (-z)
+        [-1, -1, -1], [ 1, -1, -1], [ 1,  1, -1], [-1,  1, -1],
+        # front (+z)
+        [-1, -1,  1], [ 1, -1,  1], [ 1,  1,  1], [-1,  1,  1],
+        # right (+x)
+        [ 1, -1, -1], [ 1, -1,  1], [ 1,  1,  1], [ 1,  1, -1],
+        # left (-x)
+        [-1, -1, -1], [-1, -1,  1], [-1,  1,  1], [-1,  1, -1]
+    ], dtype=torch.float32)
+    _top_signs = torch.tensor([[-1,  1, -1], [ 1,  1, -1], [ 1,  1,  1], [-1,  1,  1]], dtype=torch.float32)
+
+    # _face_indices = torch.tensor([
+    #         [0, 1, 2], [0, 2, 3],       # back
+    #         [4, 6, 5], [4, 7, 6],       # front
+    #         [8, 9,10], [8,10,11],       # bottom
+    #         [12,14,13], [12,15,14],     # top
+    #         [16,17,18], [16,18,19],     # right
+    # ], dtype=torch.int64)
+
+    _face_indices = torch.tensor([
+            [2, 1, 0], [3, 2, 0],       # back
+            [5, 6, 4], [6, 7, 4],       # front
+            [10, 9,8], [11,10,8],       # bottom
+            [13,14,12], [14,15,12],     # top
+            [18,17,16], [19,18,16],     # right
+    ], dtype=torch.int64)
+
+    def __init__(self, width=1.0, height=1.0, depth=1.0,
+                 roof_size=(0.2, 0.3, 0.2), export_without_roof=False, transform: Transform = None):
+        self.sizes = torch.tensor([width, height, depth], dtype=torch.float32)
+        self.roof_size = torch.tensor(roof_size, dtype=torch.float32)
+        self.export_without_roof = export_without_roof
+        super().__init__(transform or Transform(lock_scale=True, lock_rotation=True, lock_translation=True))
+
+        # Dimensions
+        self.sizes = nn.Parameter(self.sizes.clone(), requires_grad=True)
+        # Roof insets (x_inset %, height %, z_inset %)
+        self.roof_size = nn.Parameter(self.roof_size.clone(), requires_grad=True)
+
+        self.recalculate()
+
+    def calculate_verts(self) -> torch.Tensor:
+        device = self.sizes.device
+        base_corners = self._signs.to(device) * (self.sizes / 2.0).unsqueeze(0)
+
+        top_verts = self._top_signs.to(device) * (self.sizes / 2.0).unsqueeze(0)
+        h_offset = (self.sizes / 2.0 + self.roof_size * self.sizes) * torch.tensor([0,1,0], dtype=torch.float32, device=device).unsqueeze(0)
+        inset = self.roof_size.clamp(0,1) * torch.tensor([1,0,1], dtype=torch.float32, device=device).unsqueeze(0)
+        roof_top_points = top_verts * inset + h_offset
+
+
+        roof_sides = torch.stack([
+            top_verts[0],  top_verts[1], roof_top_points[1], roof_top_points[0],
+            top_verts[3],  top_verts[2], roof_top_points[2], roof_top_points[3],
+            top_verts[1],  top_verts[2], roof_top_points[2], roof_top_points[1],
+            top_verts[3],  top_verts[0], roof_top_points[0], roof_top_points[3],
+        ], dim=0).to(device)
+
+        roof_top = roof_top_points
+        return torch.cat([base_corners, roof_top, roof_sides], dim=0)
+
+    def _create_mesh(self) -> Tuple[torch.Tensor, torch.Tensor]:
+        verts = self.calculate_verts()
+        roof_faces = self._face_indices + 20
+        faces = torch.cat([self._face_indices, roof_faces], dim=0)
+        return verts, faces
+
+    def recalculate(self) -> None:
+        self._base_verts = self.calculate_verts()
+
+    def cuboid(self) -> Cuboid:
+        with torch.no_grad():
+            params = [x.clone() for x in self.transform.parameters()]
+            locks = [not x.requires_grad for x in self.transform.parameters()]
+            transform = Transform(*params, *locks)
+            return Cuboid(*self.sizes, transform=transform).to(device=self.sizes.device)
+    
+    def export_trimesh(self, apply_transform=True) -> trimesh.Trimesh:
+        if self.export_without_roof:
+            return self.cuboid().export_trimesh(apply_transform)
+        else:
+            return super().export_trimesh(apply_transform=True)

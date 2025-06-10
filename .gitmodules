@@ -91,3 +91,9 @@
 [submodule "custom_nodes/ComfyUI-MVAdapter"]
 	path = custom_nodes/ComfyUI-MVAdapter
 	url = https://github.com/huanngzh/ComfyUI-MVAdapter.git
+[submodule "custom_nodes/ComfyUI-YoloWorld-EfficientSAM"]
+	path = custom_nodes/ComfyUI-YoloWorld-EfficientSAM
+	url = https://github.com/ZHO-ZHO-ZHO/ComfyUI-YoloWorld-EfficientSAM.git
+[submodule "custom_nodes/ComfyUI-SAM2"]
+	path = custom_nodes/ComfyUI-SAM2
+	url = https://github.com/neverbiasu/ComfyUI-SAM2.git

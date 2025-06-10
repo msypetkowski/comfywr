@@ -4,6 +4,7 @@ docker run --gpus=all --rm --net=host \
   -p 8188:8188 \
   -e NVIDIA_VISIBLE_DEVICES=all \
   -e NVIDIA_DRIVER_CAPABILITIES=all \
+  -e NVIDIA_PERSONAL_API_KEY=$NVIDIA_PERSONAL_API_KEY \
   -v $(pwd):/workdir/ \
   -v $(pwd)/downloaded_models/:/workdir/ComfyUI/models/ \
   -e DISPLAY=$DISPLAY \
