@@ -4,18 +4,12 @@
 [submodule "custom_nodes/ComfyUI-AnimateDiff-Evolved"]
 	path = custom_nodes/ComfyUI-AnimateDiff-Evolved
 	url = https://github.com/Kosinkadink/ComfyUI-AnimateDiff-Evolved.git
-[submodule "custom_nodes/ComfyUI-VideoHelperSuite"]
-	path = custom_nodes/ComfyUI-VideoHelperSuite
-	url = https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git
 [submodule "custom_nodes/ComfyUI-Advanced-ControlNet"]
 	path = custom_nodes/ComfyUI-Advanced-ControlNet
 	url = https://github.com/Kosinkadink/ComfyUI-Advanced-ControlNet.git
 [submodule "custom_nodes/comfyui_controlnet_aux"]
 	path = custom_nodes/comfyui_controlnet_aux
 	url = https://github.com/Fannovel16/comfyui_controlnet_aux.git
-[submodule "custom_nodes/ComfyUI-Frame-Interpolation"]
-	path = custom_nodes/ComfyUI-Frame-Interpolation
-	url = https://github.com/Fannovel16/ComfyUI-Frame-Interpolation.git
 [submodule "custom_nodes/ComfyUI_FizzNodes"]
 	path = custom_nodes/ComfyUI_FizzNodes
 	url = https://github.com/FizzleDorf/ComfyUI_FizzNodes.git
@@ -67,9 +61,6 @@
 [submodule "custom_nodes/ComfyUI_Transparent-Background"]
 	path = custom_nodes/ComfyUI_Transparent-Background
 	url = https://github.com/maruhidd/ComfyUI_Transparent-Background.git
-[submodule "custom_nodes/ComfyUI_Dave_CustomNode"]
-	path = custom_nodes/ComfyUI_Dave_CustomNode
-	url = https://github.com/Davemane42/ComfyUI_Dave_CustomNode.git
 [submodule "custom_nodes/eden_comfy_pipelines"]
 	path = custom_nodes/eden_comfy_pipelines
 	url = https://github.com/edenartlab/eden_comfy_pipelines.git
@@ -88,6 +79,3 @@
 [submodule "custom_nodes/rgthree-comfy"]
 	path = custom_nodes/rgthree-comfy
 	url = https://github.com/rgthree/rgthree-comfy.git
-[submodule "custom_nodes/ComfyUI-MVAdapter"]
-	path = custom_nodes/ComfyUI-MVAdapter
-	url = https://github.com/huanngzh/ComfyUI-MVAdapter.git

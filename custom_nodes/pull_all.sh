@@ -9,9 +9,7 @@ do_one main ComfyUI-Advanced-ControlNet
 do_one main ComfyUI-AnimateDiff-Evolved
 do_one main comfyui_controlnet_aux
 do_one main ComfyUI_FizzNodes
-do_one main ComfyUI-Frame-Interpolation
 do_one master ComfyUI-post-processing-nodes
-do_one main ComfyUI-VideoHelperSuite
 do_one main was-node-suite-comfyui
 do_one main ComfyUI-3D-Pack
 do_one main ComfyUI_essentials
@@ -25,10 +23,8 @@ do_one main ComfyUI_UltimateSDUpscale/
 do_one main ComfyUI-DepthAnythingV2//
 do_one main ComfyUI_Transparent-Background/
 do_one main ComfyUI-BRIA_AI-RMBG/
-do_one main ComfyUI_Dave_CustomNode/
 do_one main eden_comfy_pipelines/
 do_one main efficiency-nodes-comfyui//
 do_one main x_flux_comfyui/
 do_one main rgthree-comfy/
 do_one main ComfyUI-KJNodes/
-do_one main ComfyUI-MVAdapter/

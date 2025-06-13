@@ -11,5 +11,5 @@ docker run --gpus=all --rm --net=host \
   -v $(pwd)/comfywr_cache/:/root/ \
   -v $(pwd)/custom_nodes/:/workdir/ComfyUI/custom_nodes/ \
   -it comfywr:latest \
-  bash -c "cd /workdir/ComfyUI/; python main.py"
+  bash -c "cd /workdir/ComfyUI/; pip install pyOpenSSL watchdog ; python main.py"
   # -v $(pwd)/custom_nodes/ComfyUI-3D-Pack/:/workdir/ComfyUI/custom_nodes/ComfyUI-3D-Pack/ \
