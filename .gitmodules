@@ -79,3 +79,6 @@
 [submodule "custom_nodes/rgthree-comfy"]
 	path = custom_nodes/rgthree-comfy
 	url = https://github.com/rgthree/rgthree-comfy.git
+[submodule "custom_nodes/style_aligned_comfy"]
+	path = custom_nodes/style_aligned_comfy
+	url = https://github.com/brianfitzgerald/style_aligned_comfy.git
