@@ -111,9 +111,9 @@ RUN wget https://github.com/JotJunior/PHP-Boleto-ZF2/raw/master/public/assets/fo
 RUN mv arial.ttf /usr/share/fonts/
 
 # 3D pack (complex dependencies)
-COPY custom_nodes/ComfyUI-3D-Pack/requirements.txt .
-RUN pip install -r requirements.txt
 RUN pip install ninja rembg[gpu] open_clip_torch
+# COPY custom_nodes/ComfyUI-3D-Pack/requirements.txt .
+# RUN pip install -r requirements.txt
 WORKDIR /install_dir/
 COPY custom_nodes/ComfyUI-3D-Pack/install.py .
 COPY custom_nodes/ComfyUI-3D-Pack/_Pre_Builds/ ./_Pre_Builds

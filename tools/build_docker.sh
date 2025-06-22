@@ -4,7 +4,8 @@ set -e
 BASE_IMAGE="comfywr_intermediate:latest"
 TARGET_IMAGE="comfywr:latest"
 
-docker build -t $BASE_IMAGE -f docker/comfywr/Dockerfile .
+docker build -t $TARGET_IMAGE -f docker/comfywr/Dockerfile .
+# docker build -t $BASE_IMAGE -f docker/comfywr/Dockerfile .
 
 # CONTAINER_NAME=tmp_comfywr_name
 # docker run --gpus all --name $CONTAINER_NAME -it $BASE_IMAGE /bin/bash -c "cd /install_dir/ && python install.py && python -m pip install kiui"
