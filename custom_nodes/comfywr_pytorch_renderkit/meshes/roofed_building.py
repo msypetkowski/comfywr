@@ -21,22 +21,15 @@ class RoofedBuilding(ParametricMesh):
         # left (-x)
         [-1, -1, -1], [-1, -1,  1], [-1,  1,  1], [-1,  1, -1]
     ], dtype=torch.float32)
-    _top_signs = torch.tensor([[-1,  1, -1], [ 1,  1, -1], [ 1,  1,  1], [-1,  1,  1]], dtype=torch.float32)
-
-    # _face_indices = torch.tensor([
-    #         [0, 1, 2], [0, 2, 3],       # back
-    #         [4, 6, 5], [4, 7, 6],       # front
-    #         [8, 9,10], [8,10,11],       # bottom
-    #         [12,14,13], [12,15,14],     # top
-    #         [16,17,18], [16,18,19],     # right
-    # ], dtype=torch.int64)
+    # _top_signs = torch.tensor([[-1,  1, -1], [ 1,  1, -1], [ 1,  1,  1], [-1,  1,  1]], dtype=torch.float32)
+    _top_signs = torch.tensor([[-1,  1, -1], [-1,  1,  1], [ 1,  1,  1], [ 1,  1, -1]], dtype=torch.float32)
 
     _face_indices = torch.tensor([
-            [2, 1, 0], [3, 2, 0],       # back
-            [5, 6, 4], [6, 7, 4],       # front
-            [10, 9,8], [11,10,8],       # bottom
-            [13,14,12], [14,15,12],     # top
-            [18,17,16], [19,18,16],     # right
+            [2, 1, 0], [3, 2, 0],       # bottom
+            [5, 6, 4], [6, 7, 4],       # back
+            [10, 9,8], [11,10,8],       # front
+            [13,14,12], [14,15,12],     # right
+            [18,17,16], [19,18,16],     # left
     ], dtype=torch.int64)
 
     def __init__(self, width=1.0, height=1.0, depth=1.0,
@@ -63,11 +56,18 @@ class RoofedBuilding(ParametricMesh):
         roof_top_points = top_verts * inset + h_offset
 
 
+        # roof_sides = torch.stack([
+        #     top_verts[0],  top_verts[1], roof_top_points[1], roof_top_points[0],
+        #     top_verts[3],  top_verts[2], roof_top_points[2], roof_top_points[3],
+        #     top_verts[1],  top_verts[2], roof_top_points[2], roof_top_points[1],
+        #     top_verts[3],  top_verts[0], roof_top_points[0], roof_top_points[3],
+        # ], dim=0).to(device)
+
         roof_sides = torch.stack([
-            top_verts[0],  top_verts[1], roof_top_points[1], roof_top_points[0],
-            top_verts[3],  top_verts[2], roof_top_points[2], roof_top_points[3],
-            top_verts[1],  top_verts[2], roof_top_points[2], roof_top_points[1],
-            top_verts[3],  top_verts[0], roof_top_points[0], roof_top_points[3],
+            top_verts[0], roof_top_points[0], roof_top_points[1], top_verts[1],
+            top_verts[3], roof_top_points[3], roof_top_points[2], top_verts[2],
+            top_verts[1], roof_top_points[1], roof_top_points[2], top_verts[2],
+            top_verts[0], roof_top_points[0], roof_top_points[3], top_verts[3],
         ], dim=0).to(device)
 
         roof_top = roof_top_points

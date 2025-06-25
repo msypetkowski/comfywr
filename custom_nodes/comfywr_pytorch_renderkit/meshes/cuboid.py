@@ -42,8 +42,8 @@ class Cuboid(ParametricMesh):
         faces = torch.tensor([
             [0, 1, 2], [0, 2, 3],       # back
             [4, 6, 5], [4, 7, 6],       # front
-            [8, 9,10], [8,10,11],       # bottom
-            [12,14,13], [12,15,14],     # top
+            [10, 9,8], [11,10,8],       # bottom
+            [13,14,12], [14,15,12],     # top
             [16,17,18], [16,18,19],     # right
             [20,22,21], [20,23,22]      # left
         ], dtype=torch.int64)
