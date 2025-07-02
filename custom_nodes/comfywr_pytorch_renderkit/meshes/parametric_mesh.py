@@ -73,3 +73,15 @@ class ParametricMesh(nn.Module, ABC):
             process=False,    # disable auto‐cleanup (so Trimesh won’t merge duplicates or recompute normals)
             )
     
+    def clone(self) -> "ParametricMesh":
+        # 1) clone transform state
+        cloned_transform = self.transform.clone()
+        # 2) instantiate fresh via default init with cloned transform
+        new_mesh = self.__class__(transform=cloned_transform)
+        # 3) load tensor data for params and buffers
+        new_mesh.load_state_dict(self.state_dict())
+        # 4) restore requires_grad flags
+        orig_params = dict(self.named_parameters())
+        for name, new_param in new_mesh.named_parameters():
+            new_param.requires_grad = orig_params[name].requires_grad
+        return new_mesh

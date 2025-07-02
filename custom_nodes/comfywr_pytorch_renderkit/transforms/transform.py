@@ -14,14 +14,26 @@ class Transform(nn.Module):
                  lock_rotation: bool = False,
                  lock_translation: bool = False):
         super().__init__()
-        self.scale = nn.Parameter(scale, requires_grad=not lock_scale)
-        self.rotation = nn.Parameter(rotation, requires_grad=not lock_rotation)
-        self.translation = nn.Parameter(translation, requires_grad=not lock_translation)
+        self.scale = nn.Parameter(scale.view(-1,3), requires_grad=not lock_scale)
+        self.rotation = nn.Parameter(rotation.view(-1,4), requires_grad=not lock_rotation)
+        self.translation = nn.Parameter(translation.view(-1, 3), requires_grad=not lock_translation)
 
     def forward(self, verts: torch.Tensor) -> torch.Tensor:
-        v = verts * self.scale.unsqueeze(0)
+        v = verts * self.scale
         q = self.rotation / self.rotation.norm()
-        R = quaternion_to_matrix(q.unsqueeze(0))[0]
-        v = v @ R.transpose(0, 1)
-        v = v + self.translation.unsqueeze(0)
+        R = quaternion_to_matrix(q)[0]
+        v = v @ R.transpose(1, 0)
+        v = v + self.translation
         return v
+
+    def clone(self) -> "Transform":
+        # 1) instantiate fresh via default init
+        new = self.__class__()
+        # 2) load tensor data for params and buffers
+        new.load_state_dict(self.state_dict())
+        # 3) restore requires_grad flags
+        for (orig_name, orig_p) in self.named_parameters():
+            new_p = dict(new.named_parameters())[orig_name]
+            new_p.requires_grad = orig_p.requires_grad
+        return new
+        

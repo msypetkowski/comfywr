@@ -94,3 +94,8 @@ class RoofedBuilding(ParametricMesh):
             return self.cuboid().export_trimesh(apply_transform)
         else:
             return super().export_trimesh(apply_transform=True)
+
+    def clone(self) -> "RoofedBuilding":
+        new_mesh = super().clone()
+        new_mesh.export_without_roof = self.export_without_roof
+        return new_mesh
