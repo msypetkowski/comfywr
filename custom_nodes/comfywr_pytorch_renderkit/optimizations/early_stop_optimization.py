@@ -36,10 +36,11 @@ def optimize_mesh_to_image(
         optimizer.zero_grad()
 
         cams = camera(device)
-        rendered = renderer(meshes_world=mesh(), cameras=cams)
+        meshes = mesh().extend(len(cams))
+        rendered = renderer(meshes_world=meshes, cameras=cams)
         rendered = rendered * channel_weights
 
-        loss = criterion(rendered, weighted_target)
+        loss = criterion(rendered, weighted_target.broadcast_to(rendered.shape))
         loss.backward()
         optimizer.step()
 

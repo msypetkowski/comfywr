@@ -22,7 +22,7 @@ class NormalsWithSoftSilhouetteShader(SoftSilhouetteShader):
 
         # Optionally transform normals to camera space
         if self.camera_relative:
-            R = cameras.get_world_to_view_transform().get_matrix()[:, :3, :3]  # (N, 3, 3)
+            R = cameras.get_world_to_view_transform().get_matrix()[:, :3, :3].expand(len(meshes), 3, 3)  # (N, 3, 3)
             mesh_to_camera_T = R[meshes.faces_packed_to_mesh_idx()]#.transpose(1, 2)  # (F, 3, 3)
             face_normals = torch.bmm(face_normals, mesh_to_camera_T)
 

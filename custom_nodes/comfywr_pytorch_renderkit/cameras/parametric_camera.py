@@ -61,6 +61,7 @@ class ParametricCamera(nn.Module):
         return (val - mn) / (mx - mn)
 
     def forward(self, device: torch.device = None) -> FoVPerspectiveCameras:
+        device = device or self.fov_norm.device
         # Clamp
         fov_n = self.fov_norm.clamp(0, 1)
         dist_n = self.dist_norm.clamp(0, 1)
