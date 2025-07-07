@@ -97,3 +97,6 @@
 [submodule "custom_nodes/ComfyUI-SAM2"]
 	path = custom_nodes/ComfyUI-SAM2
 	url = https://github.com/neverbiasu/ComfyUI-SAM2.git
+[submodule "custom_nodes/Orient-Anything"]
+	path = custom_nodes/Orient-Anything
+	url = https://github.com/SpatialVision/Orient-Anything.git

@@ -1,6 +1,7 @@
 from .alignment_node import AlignMeshToMutliviewMasks
 from .impact_nodes import BboxDetectorSEGSBatch, GroundingDINOBBoxDetectorProviderNode, SEGSWeightedMaskCombined
 from .nodes import ApplyMeshTransform, ImageBatchDiagnoser, ImageAligner, AlignMeshToMasks, NormalizeMeshBBox, CreateSimpleBuildingMesh
+from .orient_anything_node import OrientAnythingNode
 
 NODE_CLASS_MAPPINGS = {"Image Diagnoser": ImageBatchDiagnoser,
                        "Image Aligner": ImageAligner,
@@ -12,6 +13,7 @@ NODE_CLASS_MAPPINGS = {"Image Diagnoser": ImageBatchDiagnoser,
                        "SEGS Weighted Mask Combined": SEGSWeightedMaskCombined,
                        "BBox Detector SEGS Batch": BboxDetectorSEGSBatch,
                        "Apply Mesh Transform": ApplyMeshTransform,
+                       "Orient Anything": OrientAnythingNode,
                        }
 NODE_DISPLAY_NAME_MAPPINGS = {}
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']

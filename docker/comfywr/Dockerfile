@@ -99,6 +99,8 @@ COPY custom_nodes/rgthree-comfy/requirements.txt .
 RUN pip install -r requirements.txt
 COPY custom_nodes/ComfyUI-MVAdapter/requirements.txt .
 RUN pip install -r requirements.txt
+COPY custom_nodes/Orient-Anything/requirements.txt .
+RUN pip install -r requirements.txt
 
 # other packages (not listed in requirements.txt files in some submodules, but needed)
 RUN pip install ultralytics==8.2.1
