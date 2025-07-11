@@ -63,8 +63,8 @@ class ParametricMesh(nn.Module, ABC):
             vert_norms = meshes.verts_normals_packed()     # returns a tensor of shape (V,3)
 
             # Move everything to CPU+NumPy:
-            verts_np      = verts.detach().cpu().numpy()
-            faces_np      = faces.detach().cpu().flip(-1).numpy() # Flip faces for trimesh format
+            verts_np      = meshes.verts_packed().detach().cpu().numpy()
+            faces_np      = meshes.faces_packed().detach().cpu().flip(-1).numpy() # Flip faces for trimesh format
             face_norms_np = face_norms.detach().cpu().numpy()
             vert_norms_np = vert_norms.detach().cpu().numpy()
 
