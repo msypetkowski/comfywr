@@ -28,12 +28,15 @@ class LoadedMesh(ParametricMesh):
         self.offsets = nn.Parameter(torch.zeros_like(self._loaded_verts), requires_grad=not lock_offsets)
         self.recalculate()
 
-    def recalculate(self) -> None:
+    def recalculate(self) -> torch.Tensor:
         """
         Update base vertices by adding offsets to original loaded vertices.
+        Returns vertices for noisy variants of a mesh with given noise amplitude
         """
         # Compute new verts with offsets
-        self._base_verts = self._loaded_verts + self.offsets
+        verts = self._loaded_verts + self.offsets
+        self._base_verts = verts
+        return verts.unsqueeze(0)
 
     def _create_mesh(self) -> Tuple[torch.Tensor, torch.Tensor]:
         # Used by base init to set up base geometry

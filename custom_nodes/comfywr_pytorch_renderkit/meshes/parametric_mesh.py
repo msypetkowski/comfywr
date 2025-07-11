@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Optional, Tuple
 from ..transforms.transform import Transform
 import torch
 import torch.nn as nn
@@ -32,26 +32,29 @@ class ParametricMesh(nn.Module, ABC):
         """
         pass
 
-    def recalculate(self) -> None:
+    def recalculate(self) -> torch.Tensor:
         """
         Recompute and cache only the base vertices. Faces remain constant.
         """
         verts, _ = self._create_mesh()
         self._base_verts = verts
+        return verts.unsqueeze(0)
 
     def forward(self) -> Meshes:
-        self.recalculate()
-        verts = self.transform(self._base_verts)
-        return Meshes(verts=[verts], faces=[self._faces.to(verts.device)])
+        verts = self.recalculate()
+        verts = self.transform(verts)
+        faces = self._faces.unsqueeze(0).expand(len(verts), *self._faces.shape).to(verts.device)
+        return Meshes(verts=verts, faces=faces)
+    
 
     def export_trimesh(self, apply_transform=True) -> trimesh.Trimesh:
         with torch.no_grad():
-            self.recalculate()
-            verts = self.transform(self._base_verts) if apply_transform else self._base_verts  # (V,3)
-            faces = self._faces.to(verts.device)  # (F,3)
+            verts = self.recalculate()
+            verts = self.transform(verts) if apply_transform else verts  # (1,V,3)
+            faces = self._faces.to(verts.device).unsqueeze(0)  # (1,F,3)
 
             # Create a single‐mesh batch:
-            meshes = Meshes(verts=[verts], faces=[faces])
+            meshes = Meshes(verts=verts, faces=faces)
 
             # PyTorch3D will give you:
             #  - face_normals: (F, 3) unit normals, one per face

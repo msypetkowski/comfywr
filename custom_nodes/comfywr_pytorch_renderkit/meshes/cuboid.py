@@ -49,11 +49,13 @@ class Cuboid(ParametricMesh):
         ], dtype=torch.int64)
         return verts, faces
 
-    def recalculate(self) -> None:
+    def recalculate(self) -> torch.Tensor:
         """
         Override to update only base vertices based on `sizes`.
         """
         # Assign new base verts tensor so gradients flow through `sizes`
-        self._base_verts = self._signs.to(self.sizes.device) * (self.sizes / 2.0).unsqueeze(0)
+        verts = self._signs.to(self.sizes.device) * (self.sizes / 2.0).unsqueeze(0)
+        self._base_verts = verts
+        return verts.unsqueeze(0)
 
 

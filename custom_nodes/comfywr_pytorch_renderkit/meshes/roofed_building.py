@@ -46,41 +46,35 @@ class RoofedBuilding(ParametricMesh):
 
         self.recalculate()
 
-    def calculate_verts(self) -> torch.Tensor:
+    def calculate_verts(self, sizes, roof_size) -> torch.Tensor:
         device = self.sizes.device
-        base_corners = self._signs.to(device) * (self.sizes / 2.0).unsqueeze(0)
+        base_corners = self._signs.to(device) * (sizes / 2.0)
 
-        top_verts = self._top_signs.to(device) * (self.sizes / 2.0).unsqueeze(0)
-        h_offset = (self.sizes / 2.0 + self.roof_size * self.sizes) * torch.tensor([0,1,0], dtype=torch.float32, device=device).unsqueeze(0)
-        inset = self.roof_size.clamp(0,1) * torch.tensor([1,0,1], dtype=torch.float32, device=device).unsqueeze(0)
+        top_verts = self._top_signs.to(device) * (sizes / 2.0)
+        h_offset = (sizes / 2.0 + roof_size * sizes) * torch.tensor([0,1,0], dtype=torch.float32, device=device).unsqueeze(0)
+        inset = roof_size.clamp(0,1) * torch.tensor([1,0,1], dtype=torch.float32, device=device).unsqueeze(0)
         roof_top_points = top_verts * inset + h_offset
 
-
-        # roof_sides = torch.stack([
-        #     top_verts[0],  top_verts[1], roof_top_points[1], roof_top_points[0],
-        #     top_verts[3],  top_verts[2], roof_top_points[2], roof_top_points[3],
-        #     top_verts[1],  top_verts[2], roof_top_points[2], roof_top_points[1],
-        #     top_verts[3],  top_verts[0], roof_top_points[0], roof_top_points[3],
-        # ], dim=0).to(device)
-
         roof_sides = torch.stack([
-            top_verts[0], roof_top_points[0], roof_top_points[1], top_verts[1],
-            top_verts[3], roof_top_points[3], roof_top_points[2], top_verts[2],
-            top_verts[1], roof_top_points[1], roof_top_points[2], top_verts[2],
-            top_verts[0], roof_top_points[0], roof_top_points[3], top_verts[3],
-        ], dim=0).to(device)
+            top_verts.select(-2,0), roof_top_points.select(-2,0), roof_top_points.select(-2,1), top_verts.select(-2,1),
+            top_verts.select(-2,3), roof_top_points.select(-2,3), roof_top_points.select(-2,2), top_verts.select(-2,2),
+            top_verts.select(-2,1), roof_top_points.select(-2,1), roof_top_points.select(-2,2), top_verts.select(-2,2),
+            top_verts.select(-2,0), roof_top_points.select(-2,0), roof_top_points.select(-2,3), top_verts.select(-2,3),
+        ], dim=-2).to(device)
 
         roof_top = roof_top_points
-        return torch.cat([base_corners, roof_top, roof_sides], dim=0)
+        return torch.cat([base_corners, roof_top, roof_sides], dim=-2)
 
     def _create_mesh(self) -> Tuple[torch.Tensor, torch.Tensor]:
-        verts = self.calculate_verts()
+        verts = self.calculate_verts(self.sizes, self.roof_size)
         roof_faces = self._face_indices + 20
         faces = torch.cat([self._face_indices, roof_faces], dim=0)
         return verts, faces
 
-    def recalculate(self) -> None:
-        self._base_verts = self.calculate_verts()
+    def recalculate(self) -> torch.Tensor:
+        verts = self.calculate_verts(self.sizes, self.roof_size)
+        self._base_verts = verts
+        return verts.unsqueeze(0)
 
     def cuboid(self) -> Cuboid:
         with torch.no_grad():

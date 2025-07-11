@@ -45,7 +45,9 @@ class BaseGradientOptimization(ABC):
         parametric_mesh,
         iterations: int,
         initial_fov: float,
-        lock_camera: bool,
+        lock_fov: bool,
+        lock_camera_angles: bool,
+        lock_camera_translation: bool,
         downscale_factor: int,
         camera_poses=None,
     ):
@@ -71,7 +73,9 @@ class BaseGradientOptimization(ABC):
             # 5. initialize camera
             camera = self._init_camera(
                 initial_fov=initial_fov,
-                lock_camera=lock_camera,
+                lock_fov=lock_fov,
+                lock_camera_angles=lock_camera_angles,
+                lock_camera_translation=lock_camera_translation,
                 camera_poses=camera_poses,
             ).to(device)
 
@@ -79,9 +83,7 @@ class BaseGradientOptimization(ABC):
             mesh = parametric_mesh.clone().to(device)
 
             # 7. build optimizer
-            params = list(mesh.parameters())
-            if not lock_camera:
-                params += list(camera.parameters())
+            params = list(mesh.parameters()) + list(camera.parameters())
             optimizer = torch.optim.AdamW(params, lr=lr)
 
             # 8. core optimization
@@ -109,7 +111,11 @@ class BaseGradientOptimization(ABC):
         """Convert the raw input tensor into the desired optimization target."""
         return target_image
 
-    def _init_camera(self, initial_fov: float, lock_camera: bool, camera_poses=None):
+    def _init_camera(self, initial_fov: float,
+                    lock_fov: bool,
+                    lock_camera_angles: bool,
+                    lock_camera_translation: bool,
+                    camera_poses=None):
         if camera_poses:
             r, e, a, ox, oy, oz = camera_poses[0]
             offset = (ox, oy, oz)
@@ -122,9 +128,10 @@ class BaseGradientOptimization(ABC):
             elev=-e,
             azim=a,
             offset=offset,
-            lock_fov=lock_camera,
-            lock_distance=lock_camera,
-            lock_angles=lock_camera,
+            lock_fov=lock_fov,
+            lock_distance=lock_camera_translation,
+            lock_offset=lock_camera_translation,
+            lock_angles=lock_camera_angles,
         )
 
     def _core_optimization(
@@ -154,7 +161,7 @@ class BaseGradientOptimization(ABC):
 
 
 class NormalMapGradientOptimization(BaseGradientOptimization):
-    DEFAULT_LR = 3e-4
+    DEFAULT_LR = 5e-4
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -164,7 +171,9 @@ class NormalMapGradientOptimization(BaseGradientOptimization):
                 "parametric_mesh": ("PARAMETRIC_MESH",),
                 "iterations": ("INT", {"default": 6000, "min": 1}),
                 "initial_fov": ("FLOAT", {"default": 45.0, "min": 1.0}),
-                "lock_camera": ("BOOLEAN", {"default": False}),
+                "lock_fov": ("BOOLEAN", {"default": False}),
+                "lock_camera_angles": ("BOOLEAN", {"default": False}),
+                "lock_camera_translation": ("BOOLEAN", {"default": False}),
                 "downscale_factor": ("INT", {"default": 4, "min": 1}),
             },
             "optional": {"camera_poses": ("ORBIT_CAMPOSES",)},
@@ -225,7 +234,9 @@ class SilhouetteGradientOptimization(BaseGradientOptimization):
                 "parametric_mesh": ("PARAMETRIC_MESH",),
                 "iterations": ("INT", {"default": 3000, "min": 1}),
                 "initial_fov": ("FLOAT", {"default": 45.0, "min": 1.0}),
-                "lock_camera": ("BOOLEAN", {"default": False}),
+                "lock_fov": ("BOOLEAN", {"default": False}),
+                "lock_camera_angles": ("BOOLEAN", {"default": False}),
+                "lock_camera_translation": ("BOOLEAN", {"default": False}),
                 "downscale_factor": ("INT", {"default": 4, "min": 1}),
             },
             "optional": {"camera_poses": ("ORBIT_CAMPOSES",)},

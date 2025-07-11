@@ -19,12 +19,13 @@ class Transform(nn.Module):
         self.translation = nn.Parameter(translation.view(-1, 3), requires_grad=not lock_translation)
 
     def forward(self, verts: torch.Tensor) -> torch.Tensor:
-        v = verts * self.scale
+        shape = verts.shape
+        v = verts.view(-1,3) * self.scale
         q = self.rotation / self.rotation.norm()
         R = quaternion_to_matrix(q)[0]
         v = v @ R.transpose(1, 0)
         v = v + self.translation
-        return v
+        return v.view(shape)
 
     def clone(self) -> "Transform":
         # 1) instantiate fresh via default init
