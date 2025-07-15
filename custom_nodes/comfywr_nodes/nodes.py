@@ -1,9 +1,15 @@
+from copy import copy
 import os
 
+from .utils.mesh_utils import mesh_copy, mesh_silhouette_images, visualize_silhouettes
+from .utils.mesh_transformations import apply_transformation, compute_transformation_matrix
+
+from .utils.building_mesh import simple_building_mesh
 import cv2
 import numpy as np
 import torch
 import trimesh
+import importlib
 from PIL import Image, ImageDraw, ImageFont
 from scipy.optimize import differential_evolution
 from skimage.metrics import mean_squared_error
@@ -243,10 +249,12 @@ class AlignMeshToMasks:
     RETURN_TYPES = (
         "STRING",
         "IMAGE",
+        "TRANSFORM",
     )
     RETURN_NAMES = (
         "output_mesh_file_path",
         "visualization",
+        "transformation",
     )
     FUNCTION = "align_mesh"
     CATEGORY = "comfywr_nodes"
@@ -301,145 +309,59 @@ class AlignMeshToMasks:
         vis = visualize_silhouettes([target_silh, original_mesh_silh, aligned_silh, aligned_mesh_slih])
 
         vis = torch.tensor(vis.astype(np.float32) / 255).unsqueeze(0).cuda()
-        return (output_mesh_file_path, vis)
 
+        transformation_matrix = compute_transformation_matrix((offset_x, offset_y, offset_z), tuple(scale), pivot_point=(-1.0, 1.0, 1.0))
+        transformation_matrix = torch.from_numpy(transformation_matrix)
 
-def mesh_silhouette_images(mesh):
-    """
-    WARNING: AI generated
-
-    Generates three silhouette images of a 3D mesh projected onto the XY, YZ, and XZ planes.
-
-    Parameters:
-    mesh (trimesh.Trimesh): The input mesh, assumed to be within bounds [-1, 1] along each axis.
-
-    Returns:
-    tuple: Three 1024x1024 binary numpy arrays representing the silhouettes on the XY, YZ, and XZ planes.
-    """
-    mesh = mesh.copy()
-
-    # Get vertices and faces from the mesh
-    vertices = mesh.vertices  # shape (n_vertices, 3)
-    faces = mesh.faces  # shape (n_faces, 3)
-    triangles = vertices[faces]  # shape (n_faces, 3, 3)
-
-    # Prepare images and drawing contexts for each projection
-    img_xy = Image.new('1', (1024, 1024), 0)
-    draw_xy = ImageDraw.Draw(img_xy)
-
-    img_yz = Image.new('1', (1024, 1024), 0)
-    draw_yz = ImageDraw.Draw(img_yz)
-
-    # img_xz = Image.new('1', (1024, 1024), 0)
-    # draw_xz = ImageDraw.Draw(img_xz)
-
-    # Mapping functions from coordinate space [-1, 1] to pixel space [0, 1023]
-    def coord_to_pixel(coord):
-        # return ((coord + 1.0) * 511.5).round().astype(int)
-        # assert ((-1.0 <= coord) & (coord <= 1.0)).all(), coord
-        coord = (coord + 1) / 2
-        return (coord * 1023).round().astype(int)
-
-    def coord_to_pixel_flipped(coord):
-        # return ((1.0 - coord) * 511.5).round().astype(int)
-        # assert ((-1.0 <= coord) & (coord <= 1.0)).all(), coord
-        coord = (coord + 1) / 2
-        return ((1 - coord) * 1023).round().astype(int)
-
-    # Loop over each triangle to project and draw on the images
-
-    # assert ((-1.0 <= triangles) & (triangles <= 1.0)).all()
-    # assert ((-0.5 >= triangles) | (triangles >= 0.5)).any()
-
-    for tri in triangles:
-        # XY projection (view along +Z direction)
-        x = tri[:, 0]
-        y = tri[:, 1]
-        px = coord_to_pixel(x)
-        py = coord_to_pixel_flipped(y)
-        points = list(zip(px, py))
-        draw_xy.polygon(points, fill=1)
-
-        # YZ projection (view along +X direction)
-        y = tri[:, 1]
-        z = tri[:, 2]
-        px = coord_to_pixel_flipped(z)
-        py = coord_to_pixel_flipped(y)
-        points = list(zip(px, py))
-        draw_yz.polygon(points, fill=1)
-
-        # XZ projection (view along +Y direction)
-        # x = tri[:, 0]
-        # z = tri[:, 2]
-        # px = coord_to_pixel(x)
-        # py = coord_to_pixel_flipped(z)
-        # points = list(zip(px, py))
-        # draw_xz.polygon(points, fill=1)
-
-    # Convert images to numpy arrays and return
-    img_xy_array = np.array(img_xy)
-    img_yz_array = np.array(img_yz)
-    # img_xz_array = np.array(img_xz)
-
-    return img_xy_array, img_yz_array
+        return (output_mesh_file_path, vis, transformation_matrix)
 
 
 def transform_mesh(mesh, x_offset, y_offset, z_offset, x_scale, y_scale, z_scale):
     pivot_point = (-1.0, 1.0, 1.0)
-    # pivot_point = (0, 0, 0)
-    if isinstance(mesh, trimesh.Trimesh):
-        pivot_matrix = np.eye(4)
-        pivot_matrix[0, 3] = pivot_point[0]
-        pivot_matrix[1, 3] = pivot_point[1]
-        pivot_matrix[2, 3] = pivot_point[2]
+    translation = (x_offset, y_offset, z_offset)
+    scale = (x_scale, y_scale, z_scale)
 
-        scale_matrix = np.eye(4)
-        scale_matrix[0, 0] = x_scale
-        scale_matrix[1, 1] = y_scale
-        scale_matrix[2, 2] = z_scale
-
-        translation_matrix = np.eye(4)
-        translation_matrix[0, 3] = x_offset
-        translation_matrix[1, 3] = y_offset
-        translation_matrix[2, 3] = z_offset
-
-        transformation_matrix = pivot_matrix @ translation_matrix @ scale_matrix @ np.linalg.inv(pivot_matrix)
-
-        transformed_mesh = mesh
-        transformed_mesh.apply_transform(transformation_matrix)
-    else:
-        transformed_mesh = mesh
-        verts = transformed_mesh.v
-
-        verts[:, 0] -= pivot_point[0]
-        verts[:, 1] -= pivot_point[1]
-        verts[:, 2] -= pivot_point[2]
-
-        verts[:, 0] *= x_scale
-        verts[:, 1] *= y_scale
-        verts[:, 2] *= z_scale
-
-        verts[:, 0] += x_offset
-        verts[:, 1] += y_offset
-        verts[:, 2] += z_offset
-
-        verts[:, 0] += pivot_point[0]
-        verts[:, 1] += pivot_point[1]
-        verts[:, 2] += pivot_point[2]
-
+    transformation_matrix = compute_transformation_matrix(translation, scale, pivot_point=pivot_point)
+    transformed_mesh = apply_transformation(mesh, transformation_matrix)
+    
     return transformed_mesh
 
 
-def visualize_silhouettes(silhouettes):
-    vis = np.zeros((silhouettes[0][0].shape[0], silhouettes[1][1].shape[1] * 2, 3), dtype=np.uint8)
-    colors = [(255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255), (100, 100, 100)]
-    for s, col in zip(silhouettes, colors):
-        assert 0 < np.mean(s) < 1
-        mask = np.concatenate(s, 1).astype(np.uint8) * 255
-        assert mask.shape == vis.shape[:2]
-        edges = cv2.dilate(mask, np.ones((3, 3))) - cv2.erode(mask, np.ones((3, 3)))
-        vis[edges > 0] = col
-    return vis
+class CreateSimpleBuildingMesh:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "width": ("FLOAT", {"default": 1.0, "min": 0.01, "max": 100.0, "step": 0.1}),
+                "height": ("FLOAT", {"default": 1.0, "min": 0.01, "max": 100.0, "step": 0.1}),
+                "depth": ("FLOAT", {"default": 1.0, "min": 0.01, "max": 100.0, "step": 0.1}),
+                "roof_type": (
+                    ["none", "pyramid", "slanted_x", "slanted_z"],
+                ),
+                "roof_height": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 5.0, "step": 0.05}),
+                "texture_res": ("INT", {"default": 512, "min": 4, "max": 4096, "step": 4}),
+            }
+        }
+
+    RETURN_TYPES = ("MESH",)
+    RETURN_NAMES = ("output_mesh",)
+    FUNCTION = "create"
+    CATEGORY = "comfywr_nodes"
+
+    def create(self, width, height, depth, roof_type, roof_height, texture_res):
+
+        # White texture
+        building = simple_building_mesh(width, height, depth, roof_type, roof_height)
+
+        # Convert to 3D-pack Mesh
+        Mesh = importlib.import_module('custom_nodes.ComfyUI-3D-Pack.mesh_processer.mesh').Mesh
+        mesh = Mesh.load_trimesh(given_mesh=building)
+        mesh.auto_normal()
+        mesh.auto_uv()
+        mesh.set_new_albedo(texture_res, texture_res)
+
+        return (mesh,)
+
 
 
 class NormalizeMeshBBox:
@@ -462,12 +384,8 @@ class NormalizeMeshBBox:
             },
         }
 
-    RETURN_TYPES = (
-        "MESH",
-    )
-    RETURN_NAMES = (
-        "output_mesh",
-    )
+    RETURN_TYPES = ("MESH", "TRANSFORM")
+    RETURN_NAMES = ("output_mesh", "transform_matrix")
     FUNCTION = "normalize_mesh"
     CATEGORY = "comfywr_nodes"
 
@@ -499,16 +417,70 @@ class NormalizeMeshBBox:
         target_center = np.array([
             (x_min + x_max) / 2,
             (y_min + y_max) / 2,
-            (z_min + z_max) / 2
+            (z_min + z_max) / 2,
         ])
 
-        verts = (verts - mesh_center) * scale_factors + target_center
+        # Build the transformation: scale about mesh_center, then translate to target_center
+        transform_matrix = compute_transformation_matrix(
+            translation=target_center,
+            scale=scale_factors,
+        )
 
-        input_mesh.v[...] = torch.from_numpy(verts)
+        transform_matrix = transform_matrix @ compute_transformation_matrix(translation=-mesh_center) 
+
+        # verts = (verts - mesh_center) * scale_factors + target_center
+
+        # Apply transform in-place
+        output_mesh = apply_transformation(mesh_copy(input_mesh), transform_matrix)
+
+        # input_mesh.v[...] = torch.from_numpy(verts)
 
         # sanity check
-        for i in range(3):
-            assert -1 + margin <= input_mesh.v[:, i].min()
-            assert 1 - margin >= input_mesh.v[:, i].max()
+        assert (output_mesh.v.amin(axis=0).cpu().numpy() >= np.array([x_min, y_min, z_min])).all()
+        assert (output_mesh.v.amax(axis=0).cpu().numpy() <= np.array([x_max, y_max, z_max])).all()
 
-        return (input_mesh, )
+        return (output_mesh, torch.from_numpy(transform_matrix))
+
+class ApplyMeshTransform:
+    """
+    ComfyUI node: apply a 4x4 transformation (TRANSFORM) to a mesh.
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "input_mesh": ("MESH",),
+                "transform_matrix": ("TRANSFORM",),
+                "inverse": ("BOOLEAN", {"default": False})
+            }
+        }
+
+    RETURN_TYPES = ("MESH",)
+    RETURN_NAMES = ("output_mesh",)
+    FUNCTION = "apply_transform_node"
+    CATEGORY = "comfywr_nodes"
+
+    def apply_transform_node(self, input_mesh, transform_matrix, inverse):
+        """
+        Apply the given 4x4 transform to the input mesh and return the mesh.
+
+        Args:
+            input_mesh: mesh with .v numpy/torch vertices or trimesh.Trimesh
+            transform_matrix: 4x4 torch tensor or numpy array
+        Returns:
+            Transformed mesh
+        """
+        # Convert torch tensor to numpy
+        if isinstance(transform_matrix, torch.Tensor):
+            matrix = transform_matrix.cpu().numpy()
+        else:
+            matrix = np.array(transform_matrix)
+
+        if inverse:
+            matrix = np.linalg.inv(matrix)
+
+        # Use utility to apply transform
+        output_mesh = apply_transformation(mesh_copy(input_mesh), matrix)
+
+        return (output_mesh, )
+

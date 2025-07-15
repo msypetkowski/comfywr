@@ -21,6 +21,9 @@ wget -nc https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve
 
 wget -nc https://civitai.com/api/download/models/782002 -O juggernautXL_juggXIByRundiffusion.safetensors
 wget -nc https://civitai.com/api/download/models/456538 -O juggernautXL_versionXInpaint.safetensors
+
+wget -nc https://civitai.com/api/download/models/782002 -O juggernautXL_juggXIByRundiffusion.safetensors
+wget -nc https://civitai.com/api/download/models/456538 -O juggernautXL_versionXInpaint.safetensors
 popd
 
 pushd controlnet/
@@ -33,7 +36,10 @@ wget -nc https://huggingface.co/spaces/Wuvin/Unique3D/resolve/main/ckpt/controln
 wget -nc https://huggingface.co/hr16/ControlNet-HandRefiner-pruned/resolve/main/control_sd15_inpaint_depth_hand_fp16.safetensors
 # wget -nc https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_openpose_fp16.safetensors
 # wget -nc https://huggingface.co/lllyasviel/control_v11p_sd15_openpose/resolve/main/diffusion_pytorch_model.fp16.safetensors -O control_v11p_sd15_openpose_fp16.safetensors
-wget https://huggingface.co/xinsir/controlnet-canny-sdxl-1.0/resolve/main/diffusion_pytorch_model_V2.safetensors -O controlnet-canny-sdxl-1.0.safetensors
+wget -nc https://huggingface.co/xinsir/controlnet-canny-sdxl-1.0/resolve/main/diffusion_pytorch_model_V2.safetensors -O controlnet-canny-sdxl-1.0.safetensors
+wget -nc https://huggingface.co/diffusers/controlnet-depth-sdxl-1.0/resolve/main/diffusion_pytorch_model.fp16.safetensors -O controlnet-depth-sdxl-1.0.safetensors
+wget -nc https://huggingface.co/xinsir/controlnet-scribble-sdxl-1.0/resolve/main/diffusion_pytorch_model.safetensors -O controlnet-scribble-sdxl-1.0.safetensors
+wget -nc https://civitai.com/api/download/models/267533 -O controlnetxlCNXL_bdsqlszNormal.safetensors
 popd
 
 pushd embeddings/
@@ -111,6 +117,12 @@ wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder
     -O CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors
 wget -nc https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/image_encoder/model.safetensors \
     -O CLIP-ViT-bigG-14-laion2B-39B-b160k.safetensors
+popd
+
+pushd ultralytics/segm
+
+wget -nc https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n-seg.pt
+
 popd
 
 # mkdir ../custom_nodes/ComfyUI-3D-Pack/checkpoints/crm/
