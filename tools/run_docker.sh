@@ -1,6 +1,7 @@
 docker run --gpus=all --rm --net=host \
   --ipc=host \
   --platform linux/amd64 \
+  --runtime=nvidia \
   -p 8188:8188 \
   -e NVIDIA_VISIBLE_DEVICES=all \
   -e NVIDIA_DRIVER_CAPABILITIES=all \
