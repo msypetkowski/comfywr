@@ -11,7 +11,7 @@ do_one main comfyui_controlnet_aux
 do_one main ComfyUI_FizzNodes
 do_one master ComfyUI-post-processing-nodes
 do_one main was-node-suite-comfyui
-do_one main ComfyUI-3D-Pack
+# do_one main ComfyUI-3D-Pack
 do_one main ComfyUI_essentials
 do_one main comfyui_marigold
 # do_one main ComfyUI_IPAdapter_plus/
