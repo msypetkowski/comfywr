@@ -1,131 +1,105 @@
-ARG CUDA_VERSION=12.4.0-devel
-ARG BUILDPLATFORM=linux/amd64
-
-FROM --platform=${BUILDPLATFORM} docker.io/nvidia/cuda:${CUDA_VERSION}-ubuntu22.04 AS base
+FROM python:3.11-slim
 
 ARG DEBIAN_FRONTEND=noninteractive
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
         build-essential \
+        ca-certificates \
         curl \
         ffmpeg \
+        freeglut3-dev \
         git \
         libegl1 \
         libegl1-mesa-dev \
         libgl1 \
-        libglib2.0-0 \
         libgl1-mesa-dev \
-        libgl1-mesa-glx \
+        libgl1-mesa-dri \
         libgles2 \
         libgles2-mesa-dev \
         libglib2.0-0 \
+        libglew-dev \
         libglvnd-dev \
         libglvnd0 \
         libglx0 \
         libsm6 \
         libxext6 \
         libxrender1 \
-        ninja-build \
-        python3.11 \
-        python3.11-dev \
-        python3.11-venv \
-        wget \
         mesa-utils \
-        libglew-dev \
-        freeglut3-dev \
-        libgl1-mesa-dri \
-        && \
-    curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11 && \
+        ninja-build \
+        wget && \
+    python -m pip install --upgrade --no-cache-dir pip setuptools wheel && \
     rm -rf /var/lib/apt/lists/*
 
-RUN ln -s /usr/bin/python3.11 /usr/bin/python & \
-    ln -s /usr/bin/python3.11 /usr/bin/python3 & \
-    ln -s /usr/bin/pip3.11 /usr/bin/pip
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PYOPENGL_PLATFORM=egl \
+    PYTHONPATH=/workdir:/workdir/ComfyUI:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux:/workdir/blender_workdir
 
-RUN python -m pip install --upgrade pip
-
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-# for GLEW
-ENV LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH
-ENV LIBGL_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
-ENV LIBGL_DEBUG=verbose
-
-# nvidia-container-runtime
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
-
-# Default pyopengl to EGL for good headless rendering support
-ENV PYOPENGL_PLATFORM=egl
 RUN mkdir -p /usr/share/glvnd/egl_vendor.d && \
-    echo '{ \
-    "file_format_version" : "1.0.0", \
-    "ICD" : { \
-        "library_path" : "libEGL_nvidia.so.0" \
-    } \
-}' > /usr/share/glvnd/egl_vendor.d/10_nvidia.json
+    printf '%s\n' \
+      '{' \
+      '  "file_format_version": "1.0.0",' \
+      '  "ICD": {' \
+      '    "library_path": "libEGL_nvidia.so.0"' \
+      '  }' \
+      '}' > /usr/share/glvnd/egl_vendor.d/10_nvidia.json
 
-# Main repo dependencies
-COPY ComfyUI/requirements.txt .
-RUN pip install -r requirements.txt
+RUN python -m pip install --no-cache-dir \
+      torch==2.9.1 \
+      torchvision==0.24.1 \
+      torchaudio==2.9.1 \
+      --index-url https://download.pytorch.org/whl/cu128
 
-# other packs (simple dependencies)
-COPY custom_nodes/comfyui_controlnet_aux/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/comfyui_marigold/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/ComfyUI_essentials/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/ComfyUI-Inspire-Pack/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/comfy-image-saver/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/ComfyUI_Transparent-Background/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/ComfyUI-KJNodes/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/ComfyUI_FizzNodes/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/ComfyUI-Impact-Pack/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/x_flux_comfyui/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/eden_comfy_pipelines/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/efficiency-nodes-comfyui/requirements.txt .
-RUN pip install -r requirements.txt
-COPY custom_nodes/rgthree-comfy/requirements.txt .
-RUN pip install -r requirements.txt
+# Main repo requirements
+COPY ComfyUI/requirements.txt /tmp/requirements/00-comfyui.txt
 
-# other packages (not listed in requirements.txt files in some submodules, but needed)
-RUN pip install ultralytics==8.2.1
-RUN pip install numba numexpr
+# Custom node requirements
+COPY custom_nodes/comfyui_controlnet_aux/requirements.txt /tmp/requirements/10-comfyui_controlnet_aux.txt
+COPY custom_nodes/comfyui_marigold/requirements.txt /tmp/requirements/11-comfyui_marigold.txt
+COPY custom_nodes/ComfyUI_essentials/requirements.txt /tmp/requirements/12-comfyui_essentials.txt
+COPY custom_nodes/ComfyUI-Inspire-Pack/requirements.txt /tmp/requirements/13-inspire_pack.txt
+COPY custom_nodes/comfy-image-saver/requirements.txt /tmp/requirements/14-comfy_image_saver.txt
+COPY custom_nodes/ComfyUI_Transparent-Background/requirements.txt /tmp/requirements/15-transparent_background.txt
+COPY custom_nodes/ComfyUI-KJNodes/requirements.txt /tmp/requirements/16-kjnodes.txt
+COPY custom_nodes/ComfyUI_FizzNodes/requirements.txt /tmp/requirements/17-fizznodes.txt
+COPY custom_nodes/ComfyUI-Impact-Pack/requirements.txt /tmp/requirements/18-impact_pack.txt
+COPY custom_nodes/x_flux_comfyui/requirements.txt /tmp/requirements/19-x_flux.txt
+COPY custom_nodes/eden_comfy_pipelines/requirements.txt /tmp/requirements/20-eden_comfy_pipelines.txt
+COPY custom_nodes/efficiency-nodes-comfyui/requirements.txt /tmp/requirements/21-efficiency_nodes.txt
+COPY custom_nodes/rgthree-comfy/requirements.txt /tmp/requirements/22-rgthree.txt
 
-# other comfywr-specific requirements
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# comfywr-specific requirements
+COPY requirements.txt /tmp/requirements/99-comfywr.txt
 
-# for PIL text rendering
-RUN wget https://github.com/JotJunior/PHP-Boleto-ZF2/raw/master/public/assets/fonts/arial.ttf
-RUN mv arial.ttf /usr/share/fonts/
+RUN set -eux; \
+    for f in /tmp/requirements/*.txt; do \
+        python -m pip install -r "$f"; \
+    done; \
+    python -m pip install \
+        ultralytics==8.2.1 \
+        numba \
+        numexpr \
+        pyOpenSSL \
+        watchdog; \
+    \
+    # Re-assert the torch stack last so no later dependency install can downgrade/replace it.
+    python -m pip install --no-cache-dir --force-reinstall \
+        torch==2.9.1 \
+        torchvision==0.24.1 \
+        torchaudio==2.9.1 \
+        --index-url https://download.pytorch.org/whl/cu128; \
+    \
+    python - <<'PY'
+import torch
+print("torch:", torch.__version__)
+print("torch.version.cuda:", torch.version.cuda)
+PY
 
-# 3D pack (complex dependencies)
-# RUN pip install ninja rembg[gpu] open_clip_torch
-# # COPY custom_nodes/ComfyUI-3D-Pack/requirements.txt .
-# # RUN pip install -r requirements.txt
-# WORKDIR /install_dir/
-# COPY custom_nodes/ComfyUI-3D-Pack/install.py .
-# COPY custom_nodes/ComfyUI-3D-Pack/_Pre_Builds/ ./_Pre_Builds
-# COPY custom_nodes/ComfyUI-3D-Pack/shared_utils/ ./shared_utils
-# ENV CUDA_HOME=/usr/local/cuda
-# ENV PATH=$CUDA_HOME/bin:$PATH
-# ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
-# ENV TORCH_CUDA_ARCH_LIST="8.0 8.6 8.9+PTX"
-# RUN python install.py
-
-RUN pip install pyOpenSSL watchdog
+# For PIL text rendering
+RUN wget -O /usr/share/fonts/arial.ttf \
+    https://github.com/JotJunior/PHP-Boleto-ZF2/raw/master/public/assets/fonts/arial.ttf
 
 WORKDIR /workdir/ComfyUI/
-
-ENV PYTHONPATH=/workdir/:/workdir/ComfyUI/:/workdir/ComfyUI/custom_nodes/comfyui_controlnet_aux/:/workdir/blender_workdir/
